@@ -2596,12 +2596,41 @@ class Database {
         }
     }
 
-    getProducts() {
-        return this.getData().products || [];
+        getProducts(options) {
+        const all = this.getData().products || [];
+        if (!options) return all;
+
+        let filtered = all;
+        if (options.search) {
+            const q = options.search.toLowerCase();
+            filtered = filtered.filter(p => 
+                (p.name || '').toLowerCase().includes(q) || 
+                (p.sku || '').toLowerCase().includes(q) ||
+                (p.category || '').toLowerCase().includes(q)
+            );
+        }
+        if (options.category && options.category !== 'all' && options.category !== '') {
+            filtered = filtered.filter(p => p.category === options.category);
+        }
+        if (options.status && options.status !== 'all' && options.status !== '') {
+            filtered = filtered.filter(p => p.status === options.status);
+        }
+
+        const page = options.page || 1;
+        const limit = options.limit || 20;
+        const totalPages = Math.max(1, Math.ceil(filtered.length / limit));
+        const start = (page - 1) * limit;
+        const paginated = filtered.slice(start, start + limit);
+
+        return {
+            products: paginated,
+            totalProducts: filtered.length,
+            totalPages: totalPages
+        };
     }
 
     getAllProducts() {
-        return this.getProducts();
+        return this.getData().products || [];
     }
 
     getProduct(sku) {
