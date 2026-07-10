@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUILDMART | Animated Expandable Catalog Canvas</title>
+    <!-- Google Fonts: Space Grotesk & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* ==========================================================
+           BUILDMART ANIMATED EXPANDABLE 2D CARD GRAPH
+           ========================================================== */
+        :root {
+            --bg-canvas: #FAFAFB;
+            --surface: #FFFFFF;
+            --surface-glass: rgba(255, 255, 255, 0.88);
+            --text-primary: #111827;
+            --text-secondary: #6B7280;
+            --text-tertiary: #9CA3AF;
+            --border-default: #E5E7EB;
+            --accent-blue: #2563EB;
+            --accent-orange: #EA580C;
+            --accent-amber: #D97706;
+            --accent-emerald: #059669;
+            --radius-md: 14px;
+            --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* MINIMAL EXECUTIVE HEADER */
+        .nav-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border-default);
+            padding: 14px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 50;
+            flex-shrink: 0;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 19px;
+        }
+
+        .brand-logo-mark {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--text-primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 13.5px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-primary);
+            background: var(--bg-canvas);
+        }
+
+        .nav-cta {
+            background: var(--text-primary);
+            color: #ffffff !important;
+            border-radius: 99px;
+            font-weight: 600;
+            padding: 8px 18px;
+        }
+
+        /* WORKSPACE AREA */
+        .workspace-container {
+            display: flex;
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* FLOATING CANVAS TOOLBAR */
+        .canvas-toolbar {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            z-index: 40;
+            background: var(--surface-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-default);
+            border-radius: 12px;
+            box-shadow: var(--shadow-subtle);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tool-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .tool-btn:hover {
+            background: var(--bg-canvas);
+            border-color: var(--border-default);
+        }
+
+        .tool-divider {
+            height: 1px;
+            background: var(--border-default);
+            margin: 2px 4px;
+        }
+
+        /* VIEW SWITCHER & EXPAND CONTROLS */
+        .view-switcher {
+            position: absolute;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 40;
+            background: var(--surface-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-default);
+            border-radius: 99px;
+            padding: 4px;
+            display: flex;
+            gap: 6px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .view-pill {
+            padding: 6px 16px;
+            border-radius: 99px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .view-pill.active {
+            background: var(--text-primary);
+            color: #ffffff;
+        }
+
+        .view-pill.action-pill {
+            background: #EFF6FF;
+            color: var(--accent-blue);
+        }
+
+        .view-pill.action-pill:hover {
+            background: #DBEAFE;
+        }
+
+        /* MAIN CANVAS GRAPH VIEW */
+        #treeCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+            background-color: #F8FAFC;
+            background-image: 
+                radial-gradient(#CBD5E1 1px, transparent 1px),
+                radial-gradient(#CBD5E1 1px, #F8FAFC 1px);
+            background-size: 32px 32px;
+            background-position: 0 0, 16px 16px;
+        }
+
+        #treeCanvas:active {
+            cursor: grabbing;
+        }
+
+        /* RIGHT HAND NODE INSPECTOR SIDEBAR */
+        .node-inspector {
+            width: 360px;
+            background: var(--surface);
+            border-left: 1px solid var(--border-default);
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            z-index: 40;
+            overflow-y: auto;
+            box-shadow: -4px 0 24px rgba(0,0,0,0.03);
+        }
+
+        .inspector-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .node-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 99px;
+            background: #EFF6FF;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .spec-box {
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-default);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .spec-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .spec-val {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .btn-inspect-action {
+            width: 100%;
+            background: var(--text-primary);
+            color: #ffffff;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 12px;
+            transition: opacity 0.15s ease;
+        }
+
+        .btn-inspect-action:hover {
+            opacity: 0.9;
+            color: #fff;
+        }
+
+        /* HIERARCHICAL TREE LIST VIEW */
+        #treeListView {
+            display: none;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            padding: 40px;
+            background: var(--surface);
+        }
+
+        .tree-ul {
+            list-style: none;
+            padding-left: 24px;
+            border-left: 1px dashed var(--border-default);
+        }
+
+        .tree-li {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .tree-node-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-default);
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .tree-node-label:hover {
+            border-color: var(--accent-blue);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MINIMAL WHITE EXECUTIVE HEADER -->
+    <header class="nav-header">
+        <a href="index.html" class="brand-logo">
+            <div class="brand-logo-mark"><i class="bi bi-diagram-3"></i></div>
+            <span>BUILDMART</span>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="index.html" class="nav-link"><i class="bi bi-grid-1x2"></i> Overview</a></li>
+            <li><a href="add-product.html" class="nav-link"><i class="bi bi-plus-lg"></i> Add Inventory</a></li>
+            <li><a href="products.html" class="nav-link"><i class="bi bi-collection"></i> All Products</a></li>
+            <li><a href="tree.html" class="nav-link active"><i class="bi bi-diagram-2"></i> Canvas Tree</a></li>
+            <li><a href="json-editor.html" class="nav-link"><i class="bi bi-sliders"></i> JSON Editor</a></li>
+            <li><a href="shop.html" class="nav-link nav-cta"><i class="bi bi-arrow-up-right"></i> Live Storefront</a></li>
+        </ul>
+    </header>
+
+    <!-- WORKSPACE AREA -->
+    <main class="workspace-container">
+
+        <!-- FLOATING CANVAS CONTROLS -->
+        <div class="canvas-toolbar">
+            <button class="tool-btn" title="Zoom In" onclick="zoomCanvas(1.2)"><i class="bi bi-zoom-in"></i></button>
+            <button class="tool-btn" title="Zoom Out" onclick="zoomCanvas(0.8)"><i class="bi bi-zoom-out"></i></button>
+            <button class="tool-btn" title="Reset View" onclick="resetCanvasView()"><i class="bi bi-arrows-move"></i></button>
+            <div class="tool-divider"></div>
+            <button class="tool-btn" title="Auto-Layout Graph" onclick="autoLayoutNodes()"><i class="bi bi-magic"></i></button>
+            <button class="tool-btn" title="Reload Live DB" onclick="loadCatalogTree()"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+
+        <!-- TOP VIEW SWITCHER PILLS -->
+        <div class="view-switcher">
+            <button class="view-pill active" id="btnGraphView" onclick="switchViewMode('canvas')">
+                <i class="bi bi-diagram-3 me-1"></i> Animated Expandable Graph
+            </button>
+            <button class="view-pill action-pill" onclick="toggleExpandAll(true)">
+                <i class="bi bi-arrows-expand me-1"></i> Expand All
+            </button>
+            <button class="view-pill action-pill" onclick="toggleExpandAll(false)">
+                <i class="bi bi-arrows-collapse me-1"></i> Collapse All
+            </button>
+            <button class="view-pill" id="btnListView" onclick="switchViewMode('list')">
+                <i class="bi bi-list-nested me-1"></i> Hierarchical List
+            </button>
+        </div>
+
+        <!-- CANVAS DRAGGABLE MINI-CARD GRAPH -->
+        <canvas id="treeCanvas"></canvas>
+
+        <!-- HIERARCHICAL TREE LIST VIEW -->
+        <div id="treeListView">
+            <h2 style="font-family:'Space Grotesk'; margin-bottom: 20px;">Catalog Hierarchy Tree</h2>
+            <div id="treeListContent"></div>
+        </div>
+
+        <!-- RIGHT HAND NODE INSPECTOR -->
+        <aside class="node-inspector" id="nodeInspector">
+            <div class="inspector-title">
+                <span>Node Inspector</span>
+                <span class="node-badge" id="inspType">Root</span>
+            </div>
+
+            <div id="inspContent">
+                <div class="spec-box">
+                    <div class="spec-label">SELECTION STATUS</div>
+                    <div class="spec-val">Click any card on the 2D canvas to inspect hierarchy & properties. Click the [+/-] badge on cards to expand or collapse branches.</div>
+                </div>
+            </div>
+        </aside>
+
+    </main>
+
+    <script src="db.js"></script>
+    <script>
+        /* ==========================================================
+           ANIMATED EXPANDABLE 4-TIER ARCHITECTURAL CANVAS ENGINE
+           ========================================================== */
+        const canvas = document.getElementById('treeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let nodes = [];
+        let edges = [];
+        let selectedNode = null;
+        let draggedNode = null;
+
+        let camera = { x: 0, y: 0, zoom: 0.85 };
+        let isPanning = false;
+        let panStart = { x: 0, y: 0 };
+
+        // Animated signal pulse counter along connecting lines
+        let pulseTime = 0;
+
+        // Track collapsed states by node id
+        let collapsedNodes = {};
+
+        window.addEventListener('resize', resizeCanvas);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            resizeCanvas();
+            loadCatalogTree();
+            setupCanvasEvents();
+            requestAnimationFrame(drawLoop);
+        });
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth - 360;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+
+        /* ----------------------------------------------------------
+           HELPER: INTELLIGENT SUBCATEGORY INFERENCE
+           ---------------------------------------------------------- */
+        function inferSubcategory(product) {
+            if (product.subcategory && product.subcategory.trim() !== '') {
+                return product.subcategory.trim();
+            }
+            const name = (product.name || '').toLowerCase();
+            if (name.includes('impact drill') || name.includes('impact driver')) return 'Impact Drills';
+            if (name.includes('hammer') || name.includes('gbh')) return 'Rotary Hammers';
+            if (name.includes('cordless drill') || name.includes('battery')) return 'Cordless Drills';
+            if (name.includes('grinder') || name.includes('gws')) return 'Angle Grinders';
+            if (name.includes('saw') || name.includes('gks')) return 'Circular Saws';
+            if (name.includes('plier') || name.includes('cutter')) return 'Pliers & Cutters';
+            if (name.includes('wrench') || name.includes('socket')) return 'Socket Wrenches';
+            if (name.includes('box') || name.includes('storage')) return 'Modular Storage';
+            return 'General Power Tools';
+        }
+
+        /* ----------------------------------------------------------
+           BUILD NON-OVERLAPPING TREE: ROOT -> CAT -> SUBCAT -> SKU
+           ---------------------------------------------------------- */
+        function loadCatalogTree() {
+            nodes = [];
+            edges = [];
+
+            let products = [];
+            try {
+                if (typeof db.getAllProducts === 'function') {
+                    products = db.getAllProducts() || [];
+                } else if (typeof db.getData === 'function') {
+                    products = db.getData()?.products || [];
+                }
+            } catch(e) {
+                console.warn("Could not load from db.js:", e);
+            }
+
+            if (!products || products.length === 0) {
+                products = [
+                    { sku: 'DEW-DCD791', name: 'DeWalt 20V MAX XR Brushless Drill/Driver', category: 'Power Tools', subcategory: 'Cordless Drills', price: { selling_price: '14,500' } },
+                    { sku: 'BOS-GSB18V', name: 'Bosch Professional 18V Cordless Impact Drill', category: 'Power Tools', subcategory: 'Impact Drills', price: { selling_price: '12,990' } },
+                    { sku: 'MAK-HP484D', name: 'Makita LXT 18V Hammer Driver Drill', category: 'Power Tools', subcategory: 'Rotary Hammers', price: { selling_price: '16,200' } },
+                    { sku: 'BOS-GBH220', name: 'Bosch GBH 220 Professional Rotary Hammer', category: 'Power Tools', subcategory: 'Rotary Hammers', price: { selling_price: '4,849' } },
+                    { sku: 'BOS-GKS235', name: 'Bosch GKS 235 Turbo Circular Saw', category: 'Power Tools', subcategory: 'Circular Saws', price: { selling_price: '13,600' } },
+                    { sku: 'STA-STHT71', name: 'Stanley 10-Piece Professional Pliers & Cutter Set', category: 'Hand Tools', subcategory: 'Pliers & Cutters', price: { selling_price: '1,850' } },
+                    { sku: 'TAP-HT9920', name: 'Taparia Heavy Duty Socket Wrench Set 24 Pcs', category: 'Hand Tools', subcategory: 'Socket Wrenches', price: { selling_price: '3,450' } }
+                ];
+            }
+
+            // Group hierarchy: categories -> subcategories -> products
+            const catalogTree = {};
+            products.forEach(p => {
+                const cat = p.category || 'Power Tools';
+                const subcat = inferSubcategory(p);
+                if (!catalogTree[cat]) catalogTree[cat] = {};
+                if (!catalogTree[cat][subcat]) catalogTree[cat][subcat] = [];
+                catalogTree[cat][subcat].push(p);
+            });
+
+            // STRICT NON-OVERLAPPING BOUNDING LAYOUT
+            // Column X coordinates with generous spacing
+            const col0X = 140; // Root
+            const col1X = 460; // Categories
+            const col2X = 820; // Subcategories
+            const col3X = 1220; // Product SKUs
+
+            const leafSlotHeight = 112; // Card 88px + Gap 24px
+            let globalLeafIndex = 0;
+
+            const catKeys = Object.keys(catalogTree);
+
+            // Calculate total expanded tree height for center balancing
+            let totalLeafsCount = 0;
+            catKeys.forEach(catName => {
+                const isCatCollapsed = collapsedNodes['cat_' + catName];
+                const subKeys = Object.keys(catalogTree[catName]);
+                if (isCatCollapsed) {
+                    totalLeafsCount += 1;
+                } else {
+                    subKeys.forEach(subName => {
+                        const isSubCollapsed = collapsedNodes['sub_' + catName + '_' + subName];
+                        if (isSubCollapsed) {
+                            totalLeafsCount += 1;
+                        } else {
+                            totalLeafsCount += Math.max(1, catalogTree[catName][subName].length);
+                        }
+                    });
+                }
+            });
+
+            const treeStartY = Math.max(100, (canvas.height - totalLeafsCount * leafSlotHeight) / 2 + 60);
+
+            // 1. Root Master Node
+            const rootNode = {
+                id: 'root',
+                title: 'BUILDMART CATALOG',
+                subtitle: 'Master Inventory Hub',
+                category: 'HIERARCHY LEVEL 1',
+                price: 'ACTIVE',
+                type: 'root',
+                x: col0X,
+                y: treeStartY + (totalLeafsCount * leafSlotHeight) / 2 - leafSlotHeight / 2,
+                width: 220,
+                height: 84,
+                color: '#111827',
+                textColor: '#FFFFFF',
+                badgeColor: '#2563EB',
+                details: { title: 'Master Catalog', count: products.length + ' Total SKUs' }
+            };
+            nodes.push(rootNode);
+
+            catKeys.forEach((catName, cIdx) => {
+                const catId = 'cat_' + catName;
+                const isCatCollapsed = !!collapsedNodes[catId];
+                const subKeys = Object.keys(catalogTree[catName]);
+
+                const catStartLeafIndex = globalLeafIndex;
+
+                if (isCatCollapsed) {
+                    const catY = treeStartY + globalLeafIndex * leafSlotHeight;
+                    const catNode = {
+                        id: catId,
+                        title: catName,
+                        subtitle: subKeys.length + ' Subcategories (Collapsed)',
+                        category: 'SECTOR CATEGORY',
+                        price: '[+]',
+                        type: 'category',
+                        collapsed: true,
+                        x: col1X,
+                        y: catY,
+                        width: 220,
+                        height: 84,
+                        color: '#2563EB',
+                        textColor: '#FFFFFF',
+                        badgeColor: '#1E40AF',
+                        details: { title: catName, count: subKeys.length + ' Subcategories' }
+                    };
+                    nodes.push(catNode);
+                    edges.push({ from: 'root', to: catId });
+                    globalLeafIndex++;
+                } else {
+                    subKeys.forEach((subName, sIdx) => {
+                        const subId = 'sub_' + catName + '_' + subName;
+                        const isSubCollapsed = !!collapsedNodes[subId];
+                        const items = catalogTree[catName][subName];
+
+                        const subStartLeafIndex = globalLeafIndex;
+
+                        if (isSubCollapsed) {
+                            const subY = treeStartY + globalLeafIndex * leafSlotHeight;
+                            const subNode = {
+                                id: subId,
+                                title: subName,
+                                subtitle: items.length + ' SKUs (Collapsed)',
+                                category: 'SUBCATEGORY',
+                                price: '[+]',
+                                type: 'subcategory',
+                                collapsed: true,
+                                x: col2X,
+                                y: subY,
+                                width: 220,
+                                height: 80,
+                                color: '#1E293B',
+                                textColor: '#FFFFFF',
+                                badgeColor: '#D97706',
+                                details: { title: subName, count: items.length + ' SKUs' }
+                            };
+                            nodes.push(subNode);
+                            edges.push({ from: catId, to: subId });
+                            globalLeafIndex++;
+                        } else {
+                            items.forEach((prod, pIdx) => {
+                                const prodY = treeStartY + globalLeafIndex * leafSlotHeight;
+                                const prodId = 'prod_' + prod.sku + '_' + pIdx;
+                                const prodNode = {
+                                    id: prodId,
+                                    title: prod.name || 'Hardware Tool Item',
+                                    subtitle: 'SKU: ' + (prod.sku || 'N/A'),
+                                    category: subName.toUpperCase(),
+                                    price: '₹' + (prod.price?.selling_price || '0'),
+                                    type: 'product',
+                                    x: col3X,
+                                    y: prodY,
+                                    width: 240,
+                                    height: 88,
+                                    color: '#FFFFFF',
+                                    textColor: '#111827',
+                                    badgeColor: '#F3F4F6',
+                                    details: prod
+                                };
+                                nodes.push(prodNode);
+                                edges.push({ from: subId, to: prodId });
+                                globalLeafIndex++;
+                            });
+
+                            // Place Subcategory Node precisely centered beside its own exclusive block of children
+                            const subEndLeafIndex = globalLeafIndex - 1;
+                            const subCenterY = treeStartY + ((subStartLeafIndex + subEndLeafIndex) / 2) * leafSlotHeight;
+
+                            const subNode = {
+                                id: subId,
+                                title: subName,
+                                subtitle: items.length + ' Product SKUs',
+                                category: 'SUBCATEGORY',
+                                price: '[-]',
+                                type: 'subcategory',
+                                collapsed: false,
+                                x: col2X,
+                                y: subCenterY,
+                                width: 220,
+                                height: 80,
+                                color: '#1E293B',
+                                textColor: '#FFFFFF',
+                                badgeColor: '#D97706',
+                                details: { title: subName, count: items.length + ' SKUs' }
+                            };
+                            nodes.push(subNode);
+                            edges.push({ from: catId, to: subId });
+                        }
+                    });
+
+                    // Place Category Node precisely centered beside its Subcategories
+                    const catEndLeafIndex = globalLeafIndex - 1;
+                    const catCenterY = treeStartY + ((catStartLeafIndex + catEndLeafIndex) / 2) * leafSlotHeight;
+
+                    const catNode = {
+                        id: catId,
+                        title: catName,
+                        subtitle: subKeys.length + ' Subcategories',
+                        category: 'SECTOR CATEGORY',
+                        price: '[-]',
+                        type: 'category',
+                        collapsed: false,
+                        x: col1X,
+                        y: catCenterY,
+                        width: 220,
+                        height: 84,
+                        color: '#2563EB',
+                        textColor: '#FFFFFF',
+                        badgeColor: '#1E40AF',
+                        details: { title: catName, count: subKeys.length + ' Subcategories' }
+                    };
+                    nodes.push(catNode);
+                    edges.push({ from: 'root', to: catId });
+                }
+            });
+
+            if (!selectedNode) selectNode(rootNode);
+            renderTreeViewList(catalogTree);
+        }
+
+        function toggleExpandAll(expand) {
+            if (expand) {
+                collapsedNodes = {};
+            } else {
+                nodes.forEach(n => {
+                    if (n.type === 'category' || n.type === 'subcategory') {
+                        collapsedNodes[n.id] = true;
+                    }
+                });
+            }
+            loadCatalogTree();
+        }
+
+        function toggleCollapseNode(node) {
+            if (node.type === 'category' || node.type === 'subcategory') {
+                if (collapsedNodes[node.id]) {
+                    delete collapsedNodes[node.id];
+                } else {
+                    collapsedNodes[node.id] = true;
+                }
+                loadCatalogTree();
+            }
+        }
+
+        function autoLayoutNodes() {
+            camera = { x: 0, y: 0, zoom: 0.85 };
+            loadCatalogTree();
+        }
+
+        function resetCanvasView() {
+            camera = { x: 0, y: 0, zoom: 0.85 };
+        }
+
+        function zoomCanvas(factor) {
+            camera.zoom = Math.max(0.35, Math.min(2.5, camera.zoom * factor));
+        }
+
+        function setupCanvasEvents() {
+            canvas.addEventListener('mousedown', (e) => {
+                const mouse = getMousePos(e);
+                const clickedNode = findNodeAtPos(mouse.x, mouse.y);
+
+                if (clickedNode) {
+                    // Check if clicked the [+]/[-] expand button on right side of card
+                    const btnXMin = clickedNode.x + clickedNode.width / 2 - 38;
+                    const btnXMax = clickedNode.x + clickedNode.width / 2;
+                    if (mouse.x >= btnXMin && mouse.x <= btnXMax && (clickedNode.type === 'category' || clickedNode.type === 'subcategory')) {
+                        toggleCollapseNode(clickedNode);
+                        return;
+                    }
+
+                    draggedNode = clickedNode;
+                    selectNode(clickedNode);
+                } else {
+                    isPanning = true;
+                    panStart = { x: e.clientX - camera.x, y: e.clientY - camera.y };
+                }
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                const mouse = getMousePos(e);
+                if (draggedNode) {
+                    draggedNode.x = mouse.x;
+                    draggedNode.y = mouse.y;
+                } else if (isPanning) {
+                    camera.x = e.clientX - panStart.x;
+                    camera.y = e.clientY - panStart.y;
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                draggedNode = null;
+                isPanning = false;
+            });
+
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const factor = e.deltaY < 0 ? 1.1 : 0.9;
+                zoomCanvas(factor);
+            });
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (e.clientX - rect.left - camera.x) / camera.zoom,
+                y: (e.clientY - rect.top - camera.y) / camera.zoom
+            };
+        }
+
+        function findNodeAtPos(x, y) {
+            for (let i = nodes.length - 1; i >= 0; i--) {
+                const n = nodes[i];
+                if (x >= n.x - n.width / 2 && x <= n.x + n.width / 2 &&
+                    y >= n.y - n.height / 2 && y <= n.y + n.height / 2) {
+                    return n;
+                }
+            }
+            return null;
+        }
+
+        /* ----------------------------------------------------------
+           SIDEBAR NODE INSPECTOR
+           ---------------------------------------------------------- */
+        function selectNode(node) {
+            selectedNode = node;
+            const badge = document.getElementById('inspType');
+            const content = document.getElementById('inspContent');
+
+            badge.textContent = node.type.toUpperCase();
+
+            if (node.type === 'product') {
+                const p = node.details;
+                content.innerHTML = `
+                    <div class="spec-box">
+                        <div class="spec-label">PRODUCT SKU</div>
+                        <div class="spec-val" style="font-family:'Space Grotesk'; font-size:18px;">${p.sku || 'SKU-000'}</div>
+                    </div>
+                    <div class="spec-box">
+                        <div class="spec-label">TOOL TITLE</div>
+                        <div class="spec-val">${p.name || 'Untitled Hardware Tool'}</div>
+                    </div>
+                    <div class="spec-box">
+                        <div class="spec-label">SECTOR & SUBCATEGORY</div>
+                        <div class="spec-val">${p.category || 'Power Tools'} / ${p.subcategory || 'General'}</div>
+                    </div>
+                    <div class="spec-box">
+                        <div class="spec-label">MARKET PRICE</div>
+                        <div class="spec-val" style="color:#059669; font-size:18px;">₹${p.price?.selling_price || 'N/A'}</div>
+                    </div>
+                    <a href="add-product.html?edit=${p.sku}" class="btn-inspect-action">
+                        <i class="bi bi-pencil-square me-1"></i> Edit Tool Specification
+                    </a>
+                `;
+            } else if (node.type === 'subcategory') {
+                content.innerHTML = `
+                    <div class="spec-box">
+                        <div class="spec-label">SUBCATEGORY NAME</div>
+                        <div class="spec-val" style="font-family:'Space Grotesk'; font-size:18px; color:#D97706;">${node.title}</div>
+                    </div>
+                    <div class="spec-box">
+                        <div class="spec-label">INDEXED TOOLS</div>
+                        <div class="spec-val">${node.subtitle}</div>
+                    </div>
+                    <button onclick="toggleCollapseNode(selectedNode)" class="btn-inspect-action" style="background:#D97706;">
+                        <i class="bi bi-arrows-expand me-1"></i> Toggle Expand / Collapse Branch
+                    </button>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="spec-box">
+                        <div class="spec-label">HIERARCHY NODE</div>
+                        <div class="spec-val" style="font-family:'Space Grotesk'; font-size:18px;">${node.title}</div>
+                    </div>
+                    <div class="spec-box">
+                        <div class="spec-label">DETAILS</div>
+                        <div class="spec-val">${node.subtitle}</div>
+                    </div>
+                `;
+            }
+        }
+
+        /* ----------------------------------------------------------
+           CUBIC BEZIER INTERPOLATION FOR ANIMATED PULSE
+           ---------------------------------------------------------- */
+        function getBezierPoint(t, p0, p1, p2, p3) {
+            const mt = 1 - t;
+            return {
+                x: mt*mt*mt * p0.x + 3*mt*mt*t * p1.x + 3*mt*t*t * p2.x + t*t*t * p3.x,
+                y: mt*mt*mt * p0.y + 3*mt*mt*t * p1.y + 3*mt*t*t * p2.y + t*t*t * p3.y
+            };
+        }
+
+        /* ----------------------------------------------------------
+           MAIN DRAW ENGINE: ANIMATED EXPANDABLE 4-TIER GRAPH
+           ---------------------------------------------------------- */
+        function drawLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pulseTime += 0.007; // Advance signal animation
+
+            ctx.save();
+            ctx.translate(camera.x, camera.y);
+            ctx.scale(camera.zoom, camera.zoom);
+
+            // 1. Draw Bezier Curves & Animated Signal Pulses
+            edges.forEach(edge => {
+                const fromNode = nodes.find(n => n.id === edge.from);
+                const toNode = nodes.find(n => n.id === edge.to);
+                if (fromNode && toNode) {
+                    const startX = fromNode.x + fromNode.width / 2;
+                    const startY = fromNode.y;
+                    const endX = toNode.x - toNode.width / 2;
+                    const endY = toNode.y;
+
+                    const p0 = { x: startX, y: startY };
+                    const p1 = { x: startX + (endX - startX) * 0.45, y: startY };
+                    const p2 = { x: endX - (endX - startX) * 0.45, y: endY };
+                    const p3 = { x: endX, y: endY };
+
+                    // Base Bezier Line
+                    ctx.beginPath();
+                    ctx.moveTo(p0.x, p0.y);
+                    ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+                    
+                    if (toNode.type === 'subcategory') ctx.strokeStyle = '#F59E0B'; // Amber connection
+                    else if (toNode.type === 'category') ctx.strokeStyle = '#3B82F6'; // Blue connection
+                    else ctx.strokeStyle = '#94A3B8'; // Slate connection
+                    
+                    ctx.lineWidth = 2.2;
+                    ctx.stroke();
+
+                    // ANIMATED GLOWING DATA SIGNAL PULSES ALONG CURVE
+                    const t = (pulseTime + (fromNode.x * 0.001)) % 1.0;
+                    const pulsePos = getBezierPoint(t, p0, p1, p2, p3);
+
+                    ctx.save();
+                    ctx.shadowColor = toNode.type === 'subcategory' ? '#F59E0B' : '#3B82F6';
+                    ctx.shadowBlur = 12;
+                    ctx.fillStyle = toNode.type === 'subcategory' ? '#F59E0B' : '#2563EB';
+                    ctx.beginPath();
+                    ctx.arc(pulsePos.x, pulsePos.y, 4.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    // Connection anchor dot
+                    ctx.fillStyle = toNode.type === 'subcategory' ? '#D97706' : '#64748B';
+                    ctx.beginPath();
+                    ctx.arc(endX, endY, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // 2. Draw 2D Architectural Cards
+            nodes.forEach(n => {
+                ctx.save();
+                ctx.translate(n.x - n.width / 2, n.y - n.height / 2);
+
+                // Card Shadow
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+                ctx.shadowBlur = 14;
+                ctx.shadowOffsetY = 4;
+
+                // Card background surface
+                ctx.fillStyle = n.color;
+                ctx.beginPath();
+                ctx.roundRect(0, 0, n.width, n.height, 12);
+                ctx.fill();
+
+                // Active Card border
+                ctx.shadowColor = 'transparent';
+                if (selectedNode && selectedNode.id === n.id) {
+                    ctx.strokeStyle = '#EA580C'; // Active Orange Highlight
+                    ctx.lineWidth = 2.5;
+                } else {
+                    ctx.strokeStyle = '#E5E7EB';
+                    ctx.lineWidth = 1;
+                }
+                ctx.stroke();
+
+                // Top Accent Badge Bar
+                ctx.fillStyle = n.badgeColor;
+                ctx.beginPath();
+                ctx.roundRect(12, 10, n.width - 24, 18, 4);
+                ctx.fill();
+
+                // Badge Text
+                ctx.fillStyle = n.type === 'product' ? '#4B5563' : '#FFFFFF';
+                ctx.font = '700 9.5px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(n.category, 18, 22);
+
+                // Main Title
+                ctx.fillStyle = n.textColor;
+                ctx.font = '600 12.5px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                let displayName = n.title;
+                if (displayName.length > 24) displayName = displayName.substring(0, 22) + '...';
+                ctx.fillText(displayName, 14, 46);
+
+                // Bottom Subtitle & Price
+                ctx.fillStyle = n.type === 'product' ? '#6B7280' : '#E2E8F0';
+                ctx.font = '500 11px Space Grotesk, sans-serif';
+                ctx.fillText(n.subtitle, 14, 68);
+
+                // Right-side badge: Price OR [+]/[-] expand button
+                if (n.type === 'category' || n.type === 'subcategory') {
+                    ctx.fillStyle = '#374151';
+                    ctx.beginPath();
+                    ctx.roundRect(n.width - 34, 48, 24, 22, 6);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#F59E0B';
+                    ctx.font = '700 13px Space Grotesk, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(n.price, n.width - 22, 64);
+                } else if (n.price) {
+                    ctx.fillStyle = '#059669';
+                    ctx.font = '700 12px Space Grotesk, sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(n.price, n.width - 14, 68);
+                }
+
+                ctx.restore();
+            });
+
+            ctx.restore();
+            requestAnimationFrame(drawLoop);
+        }
+
+        function switchViewMode(mode) {
+            const canvasEl = document.getElementById('treeCanvas');
+            const listEl = document.getElementById('treeListView');
+            const btnGraph = document.getElementById('btnGraphView');
+            const btnList = document.getElementById('btnListView');
+
+            if (mode === 'canvas') {
+                canvasEl.style.display = 'block';
+                listEl.style.display = 'none';
+                btnGraph.classList.add('active');
+                btnList.classList.remove('active');
+            } else {
+                canvasEl.style.display = 'none';
+                listEl.style.display = 'block';
+                btnGraph.classList.remove('active');
+                btnList.classList.add('active');
+            }
+        }
+
+        function renderTreeViewList(catalogTree) {
+            const listContent = document.getElementById('treeListContent');
+            let html = '<ul class="tree-ul">';
+            html += '<li><span class="tree-node-label" style="font-weight:700;"><i class="bi bi-folder-fill text-primary"></i> BUILDMART MASTER CATALOG</span>';
+            html += '<ul class="tree-ul">';
+
+            for (const [catName, subcats] of Object.entries(catalogTree)) {
+                html += `<li class="tree-li"><span class="tree-node-label"><i class="bi bi-folder2-open text-primary"></i> ${catName}</span>`;
+                html += '<ul class="tree-ul">';
+                for (const [subName, prods] of Object.entries(subcats)) {
+                    html += `<li class="tree-li"><span class="tree-node-label" style="color:#D97706;"><i class="bi bi-diagram-3-fill me-1"></i> ${subName} (${prods.length} items)</span>`;
+                    html += '<ul class="tree-ul">';
+                    prods.forEach(p => {
+                        html += `<li class="tree-li"><span class="tree-node-label" onclick="window.location.href='add-product.html?edit=${p.sku}'"><i class="bi bi-box me-1"></i> ${p.sku} - ${p.name}</span></li>`;
+                    });
+                    html += '</ul></li>';
+                }
+                html += '</ul></li>';
+            }
+            html += '</ul></li></ul>';
+            listContent.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

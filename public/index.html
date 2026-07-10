@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUILDMART | Minimal Executive Dashboard</title>
+    <!-- Google Fonts: Space Grotesk & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* ==========================================================
+           MINIMALIST WHITESPACE-DRIVEN EXECUTIVE DESIGN SYSTEM
+           ========================================================== */
+        :root {
+            --bg-canvas: #FAFAFB;
+            --surface: #FFFFFF;
+            --text-primary: #111827;
+            --text-secondary: #6B7280;
+            --text-tertiary: #9CA3AF;
+            --border-subtle: #F3F4F6;
+            --border-default: #E5E7EB;
+            --accent-blue: #2563EB;
+            --accent-orange: #EA580C;
+            --accent-emerald: #059669;
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 80px;
+        }
+
+        h1, h2, h3, h4, .font-heading {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--text-primary);
+        }
+
+        /* MINIMAL HEADER NAVIGATION */
+        .nav-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border-default);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            padding: 20px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .brand-logo-mark {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--text-primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-primary);
+        }
+
+        .nav-cta {
+            background: var(--text-primary);
+            color: #ffffff !important;
+            padding: 8px 18px;
+            border-radius: 99px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: opacity 0.2s ease;
+        }
+
+        .nav-cta:hover {
+            opacity: 0.9;
+        }
+
+        /* MAIN WHITESPACE LAYOUT WRAPPER */
+        .page-container {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 56px 48px 0 48px;
+        }
+
+        /* PAGE HEADER STRIP */
+        .page-heading-block {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 48px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .page-subtitle {
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .action-strip {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-minimal {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid var(--border-default);
+            background: var(--surface);
+            color: var(--text-primary);
+            transition: all 0.15s ease;
+        }
+
+        .btn-minimal:hover {
+            border-color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary-minimal {
+            background: var(--text-primary);
+            color: #ffffff;
+            border-color: var(--text-primary);
+        }
+
+        .btn-primary-minimal:hover {
+            background: #252F3F;
+            color: #ffffff;
+        }
+
+        /* AIRY STATS GRID (GENEROUS WHITESPACE) */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 56px;
+        }
+
+        .stat-card-minimal {
+            background: var(--surface);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 28px 32px;
+            box-shadow: var(--shadow-subtle);
+            transition: border-color 0.2s ease;
+            position: relative;
+        }
+
+        .stat-card-minimal:hover {
+            border-color: #D1D5DB;
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--bg-canvas);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .stat-number {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-trend {
+            font-size: 12px;
+            color: var(--accent-emerald);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* TWO COLUMN ARCHITECTURAL SECTIONS */
+        .content-split {
+            display: grid;
+            grid-template-columns: 1fr 1.3fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        .panel-minimal {
+            background: var(--surface);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            padding: 36px 40px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .panel-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        /* CATEGORY PROGRESS TRACKS */
+        .category-row {
+            margin-bottom: 28px;
+        }
+
+        .category-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .category-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .category-count {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 6px;
+            background: var(--border-subtle);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--text-primary);
+            border-radius: 99px;
+            transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* CLEAN RECENT ACTIVITY TABLE */
+        .table-minimal {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table-minimal th {
+            text-align: left;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0 16px 16px 16px;
+            border-bottom: 1px solid var(--border-default);
+        }
+
+        .table-minimal td {
+            padding: 20px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .table-minimal tr:last-child td {
+            border-bottom: none;
+        }
+
+        .sku-pill {
+            display: inline-block;
+            font-family: 'Space Grotesk', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-default);
+            padding: 4px 10px;
+            border-radius: 6px;
+            color: var(--text-primary);
+        }
+
+        /* RESPONSIVE WHITESPACE SCALING */
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .content-split { grid-template-columns: 1fr; }
+            .page-container { padding: 40px 24px 0 24px; }
+            .nav-header { padding: 16px 24px; }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .page-heading-block { flex-direction: column; align-items: flex-start; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MINIMAL HEADER -->
+    <header class="nav-header">
+        <a href="index.html" class="brand-logo">
+            <div class="brand-logo-mark"><i class="bi bi-box-seam"></i></div>
+            <span>BUILDMART</span>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="index.html" class="nav-link active"><i class="bi bi-grid-1x2"></i> Overview</a></li>
+            <li><a href="add-product.html" class="nav-link"><i class="bi bi-plus-lg"></i> Add Inventory</a></li>
+            <li><a href="products.html" class="nav-link"><i class="bi bi-collection"></i> All Products</a></li>
+            <li><a href="tree.html" class="nav-link"><i class="bi bi-diagram-2"></i> Canvas Tree</a></li>
+            <li><a href="json-editor.html" class="nav-link"><i class="bi bi-sliders"></i> JSON Editor</a></li>
+            <li><a href="settings.html" class="nav-link"><i class="bi bi-arrow-down-up"></i> Backup</a></li>
+            <li><a href="shop.html" class="nav-link nav-cta"><i class="bi bi-arrow-up-right"></i> Live Storefront</a></li>
+        </ul>
+    </header>
+
+    <!-- MAIN WHITESPACE PAGE WRAPPER -->
+    <main class="page-container">
+
+        <!-- HEADER BLOCK WITH BREATHING ROOM -->
+        <section class="page-heading-block">
+            <div>
+                <h1 class="page-title">Catalog Overview</h1>
+                <p class="page-subtitle">Minimal executive telemetry for hardware inventory & specifications.</p>
+            </div>
+
+            <div class="action-strip">
+                <a href="add-product.html" class="btn-minimal btn-primary-minimal">
+                    <i class="bi bi-plus-lg"></i> New Product
+                </a>
+                <a href="shop.html" class="btn-minimal">
+                    <i class="bi bi-shop"></i> Open Storefront
+                </a>
+            </div>
+        </section>
+
+        <!-- STATS GRID -->
+        <section class="stats-grid" id="statsContainer">
+            <!-- Rendered by JS -->
+            <div class="stat-card-minimal">
+                <div class="stat-header">
+                    <span class="stat-label">TOTAL SKU CATALOG</span>
+                    <div class="stat-icon"><i class="bi bi-box"></i></div>
+                </div>
+                <div class="stat-number">...</div>
+                <div class="stat-trend"><i class="bi bi-arrow-up-right"></i> Live Indexed</div>
+            </div>
+        </section>
+
+        <!-- SPLIT ARCHITECTURAL PANELS -->
+        <section class="content-split">
+
+            <!-- LEFT PANEL: CATEGORY METRICS -->
+            <div class="panel-minimal">
+                <h3 class="panel-title">Category Distribution</h3>
+                <p class="panel-desc">Real-time breakdown of catalog depth across primary tool sectors.</p>
+                <div id="progressContainer">
+                    <p style="color: var(--text-secondary); font-size: 13px;">Analyzing collection...</p>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: AIRY RECENT ACTIVITY -->
+            <div class="panel-minimal">
+                <h3 class="panel-title">Recently Indexed SKUs</h3>
+                <p class="panel-desc">Latest hardware specifications added to the local database.</p>
+                <table class="table-minimal" id="recentTable">
+                    <thead>
+                        <tr>
+                            <th>IDENTIFIER</th>
+                            <th>PRODUCT TITLE</th>
+                            <th>TIMESTAMP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="3" style="text-align:center; color:var(--text-secondary);">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="db.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchStats();
+        });
+
+        function fetchStats() {
+            try {
+                const data = db.getStats();
+                renderStats(data);
+                renderProgress(data.categories);
+                renderRecent(data.recentProducts);
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        }
+
+        function renderStats(data) {
+            const container = document.getElementById('statsContainer');
+            container.innerHTML = `
+                <div class="stat-card-minimal">
+                    <div class="stat-header">
+                        <span class="stat-label">TOTAL SKU CATALOG</span>
+                        <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+                    </div>
+                    <div class="stat-number">${data.totalProducts || 0}</div>
+                    <div class="stat-trend"><i class="bi bi-check2-circle"></i> Complete Specs</div>
+                </div>
+
+                <div class="stat-card-minimal">
+                    <div class="stat-header">
+                        <span class="stat-label">GALLERY ASSETS</span>
+                        <div class="stat-icon"><i class="bi bi-images"></i></div>
+                    </div>
+                    <div class="stat-number">${data.totalImages || 0}</div>
+                    <div class="stat-trend"><i class="bi bi-aspect-ratio"></i> High-Res Media</div>
+                </div>
+
+                <div class="stat-card-minimal">
+                    <div class="stat-header">
+                        <span class="stat-label">PARTNER BRANDS</span>
+                        <div class="stat-icon"><i class="bi bi-tags"></i></div>
+                    </div>
+                    <div class="stat-number">${data.totalBrands || 0}</div>
+                    <div class="stat-trend"><i class="bi bi-shield-check"></i> Verified Makers</div>
+                </div>
+
+                <div class="stat-card-minimal">
+                    <div class="stat-header">
+                        <span class="stat-label">INDEXED TODAY</span>
+                        <div class="stat-icon" style="color:#059669;"><i class="bi bi-lightning-charge"></i></div>
+                    </div>
+                    <div class="stat-number">${data.todayCount || 0}</div>
+                    <div class="stat-trend" style="color:#059669;"><i class="bi bi-arrow-up"></i> Active Session</div>
+                </div>
+            `;
+        }
+
+        function renderProgress(categories) {
+            const container = document.getElementById('progressContainer');
+            if (!categories || Object.keys(categories).length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary); font-size:13px;">No category data collected yet.</p>';
+                return;
+            }
+
+            // Calculate total items to create accurate minimal progress bars
+            let totalCount = 0;
+            for (const subCats of Object.values(categories)) {
+                for (const count of Object.values(subCats)) {
+                    totalCount += count;
+                }
+            }
+
+            let html = '';
+            for (const [catName, subCats] of Object.entries(categories)) {
+                let catTotal = 0;
+                for (const count of Object.values(subCats)) catTotal += count;
+                let pct = totalCount > 0 ? Math.min(100, Math.round((catTotal / totalCount) * 100)) : 10;
+
+                html += `
+                    <div class="category-row">
+                        <div class="category-header">
+                            <span class="category-name">${catName}</span>
+                            <span class="category-count">${catTotal} SKU${catTotal !== 1 ? 's' : ''} (${pct}%)</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: ${Math.max(8, pct)}%;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function renderRecent(products) {
+            const tbody = document.querySelector('#recentTable tbody');
+            if (!products || products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 24px; color:var(--text-secondary);">No products recorded yet.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = products.slice(0, 6).map(p => `
+                <tr>
+                    <td><span class="sku-pill">${p.sku || 'SKU-000'}</span></td>
+                    <td style="font-weight: 500;">${p.name || 'Untitled Hardware Item'}</td>
+                    <td style="color: var(--text-secondary); font-size: 13px;">
+                        ${p.created_at ? new Date(p.created_at).toLocaleDateString(undefined, {month:'short', day:'numeric'}) : 'Today'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

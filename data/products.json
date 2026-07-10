@@ -1,0 +1,76 @@
+{
+  "metadata": {
+    "project": "BUILD MART",
+    "last_serial_id": 1000005
+  },
+  "products": [
+    {
+      "product_serial_id": 1000002,
+      "sku": "BM-PT-DR-0001",
+      "category": "Power Tools",
+      "subcategory": "Drill Machines",
+      "name": "IBELL VORMIR ID13-75 Impact Drill",
+      "brand": {
+        "display": "IBELL TOOLS",
+        "normalized": "ibell tools"
+      },
+      "status": "Draft",
+      "completeness_score": 89,
+      "price": {
+        "mrp": 3627,
+        "selling_price": 2418,
+        "discount_percent": 33.33
+      },
+      "stock_quantity": 13,
+      "short_description": "IBELL VORMIR ID13-75 Impact Drill | 650W Motor | Dual Mode (Drilling & Impact) | 13mm Chuck | 0–2800 RPM Variable Speed | Forward/Reverse | Copper Armature | 1-Year Warranty",
+      "features": [
+        "Powerful 650W Copper Motor – High-performance motor ensures durability and efficiency for demanding drilling and impact tasks.",
+        "Dual Mode Operation – Switch easily between drilling mode for wood and metal, and impact mode for concrete and masonry.",
+        "Variable Speed Control (0–2800 RPM) – Adjustable speed for precise control across various materials and applications.",
+        "Forward/Reverse Function – Enables quick switching between drilling and screwdriving operations for added convenience."
+      ],
+      "specifications": [
+        {
+          "key": "Power Source",
+          "value": "Socket"
+        },
+        {
+          "key": "Voltage",
+          "value": "230 V"
+        },
+        {
+          "key": "RPM",
+          "value": "2300"
+        },
+        {
+          "key": "Chuck Size",
+          "value": "13 mm"
+        }
+      ],
+      "additional_info": {
+        "material": "ABS Plastic + Metal",
+        "weight": "2 kg",
+        "country_of_origin": "China"
+      },
+      "warranty_period": "1 Year",
+      "warranty_type": "Manufacturer Warranty",
+      "box_items": [
+        "1 x Product Unit",
+        "1 x User Manual",
+        "1 x Warranty Card"
+      ],
+      "images": {
+        "local": [],
+        "amazon": [
+          "https://m.media-amazon.com/images/I/81ww-zUYeoL._SL1500_.jpg",
+          "https://m.media-amazon.com/images/I/81fnKjGiD3L._SL1500_.jpg",
+          "https://m.media-amazon.com/images/I/81rg2kLQupL._SL1500_.jpg",
+          "https://m.media-amazon.com/images/I/81HhUPNcLvL._SL1500_.jpg",
+          "https://m.media-amazon.com/images/I/71ZVygn5ezL._SL1500_.jpg"
+        ]
+      },
+      "created_at": "2026-07-02T16:46:51.818Z",
+      "updated_at": "2026-07-02T16:46:51.822Z"
+    }
+  ]
+}

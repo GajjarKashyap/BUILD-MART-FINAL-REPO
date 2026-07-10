@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Build Mart – Upload & Browse</title>
+  <style>
+    /* ----- reset & base ----- */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F7F6F4; color: #1E1E1E; min-height: 100vh; }
+    :root {
+      --orange: #E07B2E;
+      --orange-dark: #C96A1E;
+      --orange-light: #FFF3E8;
+      --charcoal: #2A2A2A;
+      --gray-bg: #F7F6F4;
+      --gray-border: #E4E2DD;
+      --gray-mid: #888580;
+      --text-main: #1E1E1E;
+      --text-sec: #5A5856;
+      --white: #FFFFFF;
+    }
+
+    /* ----- nav ----- */
+    nav { background: var(--charcoal); position: sticky; top: 0; z-index: 100; }
+    .nav-inner { max-width: 1280px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; gap: 24px; height: 64px; }
+    .logo-wrap { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-icon { width: 36px; height: 36px; }
+    .logo-text .brand { font-size: 16px; font-weight: 700; letter-spacing: 0.08em; }
+    .logo-text .brand span:first-child { color: var(--white); }
+    .logo-text .brand span:last-child { color: var(--orange); }
+    .logo-text .tagline { font-size: 9px; color: #888; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 2px; }
+    .nav-search { flex: 1; position: relative; max-width: 480px; }
+    .nav-search input { width: 100%; height: 38px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 0 12px 0 36px; font-size: 13px; color: white; outline: none; }
+    .nav-search input::placeholder { color: rgba(255,255,255,0.4); }
+    .nav-search input:focus { background: rgba(255,255,255,0.15); border-color: var(--orange); }
+    .nav-search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.4); pointer-events: none; }
+    .nav-pills { display: flex; gap: 4px; margin-left: auto; }
+    .nav-pill { background: none; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); font-size: 12px; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    .nav-pill:hover, .nav-pill.active { background: var(--orange); border-color: var(--orange); color: white; }
+
+    /* ----- hero ----- */
+    .hero-strip { background: linear-gradient(135deg, var(--charcoal) 0%, #3a2e22 100%); padding: 32px 24px; border-bottom: 3px solid var(--orange); }
+    .hero-inner { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .hero-heading { font-size: 28px; font-weight: 700; color: white; }
+    .hero-heading span { color: var(--orange); }
+    .hero-sub { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 6px; }
+    .hero-stats { display: flex; gap: 24px; }
+    .hero-stat { text-align: center; }
+    .hero-stat .num { font-size: 22px; font-weight: 700; color: var(--orange); }
+    .hero-stat .lbl { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* ----- filters bar (now includes upload button) ----- */
+    .filters-bar { background: white; border-bottom: 1px solid var(--gray-border); position: sticky; top: 64px; z-index: 90; }
+    .filters-inner { max-width: 1280px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; gap: 12px; height: 52px; overflow-x: auto; }
+    .filter-label { font-size: 12px; font-weight: 600; color: var(--text-sec); white-space: nowrap; text-transform: uppercase; letter-spacing: 0.06em; }
+    .filter-chip { background: none; border: 1px solid var(--gray-border); color: var(--text-sec); font-size: 12px; padding: 5px 12px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
+    .filter-chip:hover { border-color: var(--orange); color: var(--orange); }
+    .filter-chip.active { background: var(--orange); border-color: var(--orange); color: white; }
+    .sort-select { margin-left: auto; font-size: 12px; padding: 6px 10px; border: 1px solid var(--gray-border); border-radius: 4px; color: var(--text-sec); background: white; cursor: pointer; outline: none; }
+    .upload-btn-bar {
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .upload-btn-bar:hover { background: var(--orange-dark); }
+
+    /* ----- main layout ----- */
+    .main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+    .result-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .result-count { font-size: 13px; color: var(--text-sec); }
+    .result-count strong { color: var(--text-main); }
+
+    /* ----- upload zone (drop area) ----- */
+    .upload-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 3px dashed var(--gray-border);
+      border-radius: 16px;
+      padding: 60px 40px;
+      background: white;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.25s, background 0.25s;
+      min-height: 300px;
+    }
+    .upload-zone:hover { border-color: var(--orange); background: var(--orange-light); }
+    .upload-zone.dragover { border-color: var(--orange); background: var(--orange-light); }
+    .upload-zone .icon { font-size: 56px; margin-bottom: 16px; opacity: 0.7; }
+    .upload-zone h2 { font-size: 20px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
+    .upload-zone p { color: var(--text-sec); font-size: 14px; max-width: 480px; margin-bottom: 12px; }
+    .upload-zone .btn-upload { background: var(--orange); color: white; border: none; border-radius: 8px; padding: 10px 28px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .upload-zone .btn-upload:hover { background: var(--orange-dark); }
+    .upload-zone .file-info { margin-top: 12px; font-size: 13px; color: var(--gray-mid); }
+    .upload-zone .file-info strong { color: var(--text-main); }
+    .upload-zone.hidden { display: none; }
+
+    /* ----- manual paste fallback ----- */
+    .manual-paste-area { margin-top: 16px; width: 100%; max-width: 600px; }
+    .manual-paste-area textarea { width: 100%; height: 120px; font-size: 12px; font-family: monospace; padding: 8px; border: 1px solid var(--gray-border); border-radius: 6px; resize: vertical; }
+    .manual-paste-area .btn-paste { background: var(--charcoal); color: white; border: none; border-radius: 6px; padding: 6px 16px; font-size: 13px; cursor: pointer; margin-top: 6px; }
+
+    /* ----- product grid, cards, detail, etc. (same as before) ----- */
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+    .product-card { background: white; border-radius: 10px; border: 1px solid var(--gray-border); overflow: hidden; cursor: pointer; display: flex; flex-direction: column; transition: box-shadow 0.2s, transform 0.2s; }
+    .product-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .card-img-wrap { position: relative; aspect-ratio: 1; overflow: hidden; background: #f9f8f6; }
+    .card-img-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 12px; }
+    .card-badges { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 4px; }
+    .badge { font-size: 10px; font-weight: 600; padding: 3px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge-discount { background: #e53e3e; color: white; }
+    .badge-brand { background: var(--charcoal); color: white; }
+    .img-nav { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; }
+    .img-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(0,0,0,0.2); border: none; cursor: pointer; }
+    .img-dot.active { background: var(--orange); }
+    .card-body { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; }
+    .card-sub { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--orange); font-weight: 600; margin-bottom: 4px; }
+    .card-name { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-specs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+    .spec-pill { font-size: 10px; background: var(--gray-bg); border: 1px solid var(--gray-border); color: var(--text-sec); padding: 2px 7px; border-radius: 3px; }
+    .card-price { margin-top: auto; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .price-sell { font-size: 20px; font-weight: 700; color: var(--text-main); }
+    .price-mrp { font-size: 12px; color: var(--gray-mid); text-decoration: line-through; }
+    .price-save { font-size: 11px; color: #38a169; font-weight: 600; }
+    .card-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .btn-primary { flex: 1; background: var(--orange); color: white; border: none; border-radius: 6px; padding: 9px 0; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-primary:hover { background: var(--orange-dark); }
+    .btn-sec { background: none; border: 1px solid var(--gray-border); color: var(--text-sec); border-radius: 6px; padding: 9px 14px; font-size: 13px; cursor: pointer; }
+
+    /* detail overlay */
+    .detail-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; }
+    .detail-overlay.open { display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .detail-panel { background: white; border-radius: 14px; width: 100%; max-width: 980px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
+    .detail-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--gray-border); flex-shrink: 0; }
+    .detail-breadcrumb { font-size: 12px; color: var(--text-sec); }
+    .detail-breadcrumb span { color: var(--orange); }
+    .detail-close { background: none; border: 1px solid var(--gray-border); border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 14px; color: var(--text-sec); }
+    .detail-body { display: grid; grid-template-columns: 1fr 1fr; overflow-y: auto; flex: 1; }
+    .detail-gallery { background: #f9f8f6; padding: 24px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 0; height: fit-content; }
+    .gallery-main { aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: white; border: 1px solid var(--gray-border); display: flex; align-items: center; justify-content: center; }
+    .gallery-main img { max-width: 100%; max-height: 100%; object-fit: contain; padding: 16px; }
+    .gallery-thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .thumb { width: 60px; height: 60px; border-radius: 6px; overflow: hidden; border: 2px solid transparent; cursor: pointer; background: white; display: flex; align-items: center; justify-content: center; }
+    .thumb.active { border-color: var(--orange); }
+    .thumb img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
+    .detail-info { padding: 24px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+    .detail-sku { font-size: 11px; color: var(--gray-mid); font-family: monospace; }
+    .detail-name { font-size: 22px; font-weight: 700; line-height: 1.3; }
+    .detail-price-block { background: var(--orange-light); border-radius: 8px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .detail-sell { font-size: 28px; font-weight: 700; color: var(--charcoal); }
+    .detail-mrp-wrap { text-align: right; }
+    .detail-mrp { font-size: 13px; color: var(--gray-mid); text-decoration: line-through; }
+    .detail-save-badge { background: #38a169; color: white; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 4px; margin-top: 4px; display: inline-block; }
+    .detail-short-desc { font-size: 13px; color: var(--text-sec); line-height: 1.6; border-left: 3px solid var(--orange); padding-left: 12px; }
+    .detail-section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; border-bottom: 1px solid var(--gray-border); padding-bottom: 8px; }
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .feature-list li { font-size: 13px; color: var(--text-sec); line-height: 1.5; padding-left: 18px; position: relative; }
+    .feature-list li::before { content: ''; position: absolute; left: 0; top: 7px; width: 7px; height: 7px; background: var(--orange); border-radius: 50%; }
+    .spec-table { width: 100%; border-collapse: collapse; }
+    .spec-table tr { border-bottom: 1px solid var(--gray-border); }
+    .spec-table tr:last-child { border-bottom: none; }
+    .spec-table td { padding: 7px 0; font-size: 13px; vertical-align: top; }
+    .spec-table td:first-child { color: var(--text-sec); width: 45%; }
+    .spec-table td:last-child { font-weight: 500; }
+    .box-items { display: flex; flex-wrap: wrap; gap: 6px; }
+    .box-item { background: var(--gray-bg); border: 1px solid var(--gray-border); border-radius: 4px; font-size: 11px; padding: 4px 9px; color: var(--text-sec); }
+    .warranty-block { background: #f0faf4; border: 1px solid #b2dfc4; border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
+    .warranty-block .wr-icon { font-size: 20px; }
+    .warranty-block .wr-text { font-size: 13px; color: #276749; font-weight: 600; }
+    .warranty-block .wr-sub { font-size: 11px; color: #48bb78; }
+    .stock-row { display: flex; align-items: center; gap: 8px; }
+    .stock-dot { width: 8px; height: 8px; border-radius: 50%; background: #38a169; }
+    .stock-txt { font-size: 12px; color: #276749; font-weight: 600; }
+    .detail-actions { display: flex; gap: 10px; padding-top: 4px; }
+    .detail-actions .btn-primary { flex: 1; padding: 12px; font-size: 14px; }
+    .detail-actions .btn-sec { padding: 12px 18px; font-size: 14px; }
+    .data-quality { display: flex; align-items: center; gap: 8px; }
+    .completeness-bar { flex: 1; height: 6px; background: var(--gray-border); border-radius: 3px; overflow: hidden; }
+    .completeness-fill { height: 100%; background: #38a169; border-radius: 3px; }
+    .completeness-pct { font-size: 12px; font-weight: 600; color: #38a169; }
+    .empty-state { text-align: center; padding: 80px 24px; color: var(--text-sec); }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 18px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--charcoal); color: white; padding: 12px 20px; border-radius: 8px; font-size: 13px; z-index: 999; transform: translateY(80px); opacity: 0; transition: all 0.3s; border-left: 4px solid var(--orange); }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    @media (max-width: 768px) { .detail-body { grid-template-columns: 1fr; } .hero-stats { display: none; } .hero-heading { font-size: 20px; } .nav-pills { display: none; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="logo-wrap" href="#">
+      <svg class="logo-icon" viewBox="0 0 80 80"><polygon points="40,4 72,28 72,72 8,72 8,28" fill="none" stroke="#E07B2E" stroke-width="5"/><rect x="8" y="28" width="13" height="44" fill="#2A2A2A"/><rect x="59" y="28" width="13" height="44" fill="#2A2A2A"/><rect x="28" y="52" width="24" height="20" fill="#2A2A2A"/><g transform="translate(20,22) rotate(-20,20,20)"><rect x="8" y="18" width="24" height="10" rx="2" fill="#E07B2E"/><rect x="14" y="10" width="12" height="10" rx="2" fill="#E07B2E"/><rect x="30" y="20" width="8" height="6" rx="2" fill="#E07B2E"/><rect x="18" y="28" width="4" height="16" rx="2" fill="#E07B2E"/></g></svg>
+      <div class="logo-text"><div class="brand"><span>BUILD</span> <span>MART</span></div><div class="tagline">Tools · Hardware · More</div></div>
+    </a>
+    <div class="nav-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Search products…" disabled />
+    </div>
+    <div class="nav-pills">
+      <button class="nav-pill active" onclick="setView('grid')">⊞ Grid</button>
+      <button class="nav-pill" onclick="setView('list')">☰ List</button>
+    </div>
+  </div>
+</nav>
+
+<div class="hero-strip">
+  <div class="hero-inner">
+    <div><div class="hero-heading">Power Tools & <span>Hardware</span></div><div class="hero-sub" id="heroSub">Upload your JSON catalog</div></div>
+    <div class="hero-stats" id="heroStats"></div>
+  </div>
+</div>
+
+<div class="filters-bar">
+  <div class="filters-inner" id="filtersBar">
+    <span class="filter-label">Filter:</span>
+    <button class="filter-chip active" data-filter="all" onclick="applyFilter('all', this)">All Products</button>
+    <!-- NEW: permanent upload button in the bar -->
+    <button class="upload-btn-bar" id="barUploadBtn">📤 Upload JSON</button>
+    <select class="sort-select" id="sortSelect" onchange="applySort()" disabled>
+      <option value="default">Sort: Default</option>
+      <option value="price-asc">Price: Low to High</option>
+      <option value="price-desc">Price: High to Low</option>
+      <option value="discount">Biggest Discount</option>
+      <option value="stock">Most In Stock</option>
+      <option value="name">Name A–Z</option>
+    </select>
+  </div>
+</div>
+
+<div class="main">
+  <div class="result-meta">
+    <div class="result-count" id="resultCount">No data loaded</div>
+  </div>
+  <div id="productGrid">
+    <!-- Upload Zone (drag & drop) -->
+    <div class="upload-zone" id="uploadZone">
+      <div class="icon">📂</div>
+      <h2>Drop your JSON file here</h2>
+      <p>Upload <strong>buildmart_backup_*.json</strong> or any product catalog JSON.</p>
+      <button class="btn-upload" id="uploadBtn">Choose JSON file</button>
+      <input type="file" id="fileInput" accept=".json" style="display:none" />
+      <div class="file-info" id="fileInfo"></div>
+
+      <!-- manual paste fallback -->
+      <div class="manual-paste-area">
+        <details>
+          <summary style="cursor:pointer; font-size:13px; color:var(--text-sec);">Or paste JSON manually</summary>
+          <textarea id="jsonPasteArea" placeholder="Paste your JSON here…"></textarea>
+          <button class="btn-paste" id="pasteBtn">Load from paste</button>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Overlay -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-header">
+      <div class="detail-breadcrumb" id="detailBreadcrumb"></div>
+      <button class="detail-close" onclick="closeDetailBtn()">✕ Close</button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-gallery" id="detailGallery"></div>
+      <div class="detail-info" id="detailInfo"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  (function() {
+    "use strict";
+
+    // ─── state ────────────────────────────────────────────
+    let PRODUCTS = [];
+    let filtered = [];
+    let activeFilter = 'all';
+    let currentProduct = null;
+    let dataLoaded = false;
+
+    // ─── DOM refs ──────────────────────────────────────────
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const barUploadBtn = document.getElementById('barUploadBtn');  // new
+    const fileInfo = document.getElementById('fileInfo');
+    const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sortSelect');
+    const productGrid = document.getElementById('productGrid');
+    const resultCount = document.getElementById('resultCount');
+    const heroStats = document.getElementById('heroStats');
+    const heroSub = document.getElementById('heroSub');
+    const filtersBar = document.getElementById('filtersBar');
+    const detailOverlay = document.getElementById('detailOverlay');
+    const detailBreadcrumb = document.getElementById('detailBreadcrumb');
+    const detailGallery = document.getElementById('detailGallery');
+    const detailInfo = document.getElementById('detailInfo');
+    const jsonPaste = document.getElementById('jsonPasteArea');
+    const pasteBtn = document.getElementById('pasteBtn');
+
+    // ─── helpers ───────────────────────────────────────────
+    function fmt(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(t._hide);
+      t._hide = setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function safeStr(v) { return (v || '').toString().trim(); }
+    function safeArr(a) { return Array.isArray(a) ? a : []; }
+
+    function getImages(p) {
+      if (p.images && p.images.amazon && Array.isArray(p.images.amazon)) return p.images.amazon;
+      if (Array.isArray(p.images)) return p.images;
+      return [];
+    }
+    function getSpecs(p) { return safeArr(p.specifications).filter(s => s && safeStr(s.key) && safeStr(s.value)); }
+    function getFeatures(p) { return safeArr(p.features).filter(f => safeStr(f)); }
+    function getBoxItems(p) { return safeArr(p.box_items).filter(b => safeStr(b)); }
+    function getAddInfo(p) { return p.additional_info || {}; }
+    function getBrandDisplay(p) { return (p.brand && p.brand.display) || (typeof p.brand === 'string' ? p.brand : 'Unknown'); }
+    function getCategory(p) { return safeStr(p.category) || 'Uncategorized'; }
+    function getSubcategory(p) { return safeStr(p.subcategory) || 'Other'; }
+    function getName(p) { return safeStr(p.name) || 'Unnamed Product'; }
+    function getSku(p) { return safeStr(p.sku) || 'N/A'; }
+    function getSerialId(p) { return p.product_serial_id; }
+    function getPrice(p) {
+      const mrp = Number(p.price && p.price.mrp) || 0;
+      const sp = Number(p.price && p.price.selling_price) || 0;
+      const disc = Number(p.price && p.price.discount_percent) || 0;
+      return { mrp, selling_price: sp, discount_percent: disc };
+    }
+    function getStock(p) { return Number(p.stock_quantity) || 0; }
+    function getCompleteness(p) { return Number(p.completeness_score) || 0; }
+    function getShortDesc(p) { return safeStr(p.short_description); }
+    function getWarrantyPeriod(p) { return safeStr(p.warranty_period) || 'Not specified'; }
+    function getWarrantyType(p) { return safeStr(p.warranty_type) || 'Manufacturer Warranty'; }
+
+    // ─── load products from parsed data ──────────────────
+    function loadProducts(products) {
+      if (!products || !products.length) {
+        showToast('❌ No products found in the data.');
+        return false;
+      }
+      const sample = products[0];
+      if (!sample.sku && !sample.name) {
+        showToast('❌ Invalid product data – missing SKU or name.');
+        return false;
+      }
+      PRODUCTS = products;
+      dataLoaded = true;
+      fileInfo.innerHTML = `✅ Loaded <strong>${PRODUCTS.length}</strong> products.`;
+      uploadZone.classList.add('hidden');
+      searchInput.disabled = false;
+      sortSelect.disabled = false;
+      heroSub.textContent = `📦 ${PRODUCTS.length} products loaded.`;
+      buildFilters();
+      buildHeroStats();
+      applyAll();
+      showToast(`✅ Loaded ${PRODUCTS.length} products successfully!`);
+      return true;
+    }
+
+    // ─── parse JSON string and find products ────────────
+    function parseAndLoad(jsonText) {
+      try {
+        const data = JSON.parse(jsonText);
+        let products = null;
+
+        if (data.products && Array.isArray(data.products) && data.products.length) {
+          products = data.products;
+        } else if (Array.isArray(data) && data.length) {
+          products = data;
+        } else {
+          for (const key in data) {
+            if (Array.isArray(data[key]) && data[key].length > 0) {
+              const item = data[key][0];
+              if (item && (item.sku || item.name || item.product_serial_id)) {
+                products = data[key];
+                break;
+              }
+            }
+          }
+        }
+
+        if (!products || !products.length) {
+          showToast('❌ Could not find a product array in the JSON.');
+          console.error('Parsed data:', data);
+          return false;
+        }
+
+        return loadProducts(products);
+      } catch (e) {
+        showToast('❌ Invalid JSON: ' + e.message);
+        console.error('JSON parse error:', e);
+        return false;
+      }
+    }
+
+    // ─── file handling ─────────────────────────────────────
+    function handleFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const result = parseAndLoad(e.target.result);
+        if (!result) {
+          uploadZone.classList.remove('hidden');
+        }
+      };
+      reader.onerror = function() {
+        showToast('❌ Failed to read file.');
+      };
+      reader.readAsText(file);
+    }
+
+    // ─── UI events ────────────────────────────────────────
+    // Both buttons trigger the same file input
+    uploadBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      fileInput.click();
+    });
+    barUploadBtn.addEventListener('click', function() {
+      fileInput.click();
+    });
+
+    // Click on the drop zone also triggers file input
+    uploadZone.addEventListener('click', function() {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        handleFile(this.files[0]);
+      }
+      this.value = '';
+    });
+
+    // ─── DRAG & DROP (fixed) ─────────────────────────────
+    uploadZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        handleFile(files[0]);
+      }
+    });
+
+    // Prevent default for any drop on the whole page
+    document.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    document.addEventListener('drop', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    // manual paste
+    pasteBtn.addEventListener('click', function() {
+      const text = jsonPaste.value.trim();
+      if (!text) { showToast('❌ Please paste JSON first.'); return; }
+      parseAndLoad(text);
+    });
+
+    // ─── filter / sort / render ──────────────────────────
+    function buildFilters() {
+      const container = filtersBar;
+      // Keep the filter-label, all-products chip, upload button, and sort select – we need to keep them.
+      // We'll remove only the dynamic filter chips.
+      const chips = container.querySelectorAll('.filter-chip:not([data-filter="all"])');
+      chips.forEach(c => c.remove());
+
+      if (!PRODUCTS.length) return;
+
+      const subcats = [...new Set(PRODUCTS.map(p => getSubcategory(p)))].filter(Boolean);
+      const brands = [...new Set(PRODUCTS.map(p => getBrandDisplay(p)))].filter(Boolean);
+
+      // Insert subcategory chips before the upload button (which is after the all chip)
+      const allChip = container.querySelector('.filter-chip[data-filter="all"]');
+      const barUpload = document.getElementById('barUploadBtn');
+      const sortSelect = document.getElementById('sortSelect');
+
+      subcats.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-chip';
+        btn.dataset.filter = s;
+        btn.textContent = s;
+        btn.onclick = () => applyFilter(s, btn);
+        container.insertBefore(btn, barUpload);
+      });
+
+      const div = document.createElement('span');
+      div.style.cssText = 'width:1px;height:20px;background:var(--gray-border);margin:0 4px;flex-shrink:0';
+      container.insertBefore(div, barUpload);
+
+      brands.forEach(b => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-chip';
+        btn.dataset.filter = b;
+        btn.textContent = b;
+        btn.onclick = () => applyFilter(b, btn);
+        container.insertBefore(btn, barUpload);
+      });
+
+      // restore active
+      const allChips = container.querySelectorAll('.filter-chip');
+      let found = false;
+      allChips.forEach(c => {
+        if (c.dataset.filter === activeFilter) { c.classList.add('active'); found = true; }
+        else c.classList.remove('active');
+      });
+      if (!found && allChips.length) { allChips[0].classList.add('active'); activeFilter = 'all'; }
+    }
+
+    function buildHeroStats() {
+      if (!PRODUCTS.length) { heroStats.innerHTML = ''; return; }
+      const total = PRODUCTS.length;
+      const totalStock = PRODUCTS.reduce((a,p) => a + getStock(p), 0);
+      const avgDisc = Math.round(PRODUCTS.reduce((a,p) => a + getPrice(p).discount_percent, 0) / total);
+      const brands = new Set(PRODUCTS.map(p => getBrandDisplay(p))).size;
+      heroStats.innerHTML = '';
+      [{num:total,lbl:'Products'},{num:totalStock,lbl:'In Stock'},{num:brands,lbl:'Brands'},{num:avgDisc+'%',lbl:'Avg Discount'}].forEach(s => {
+        heroStats.innerHTML += `<div class="hero-stat"><div class="num">${s.num}</div><div class="lbl">${s.lbl}</div></div>`;
+      });
+    }
+
+    function applyFilter(val, el) {
+      activeFilter = val;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      if (el) el.classList.add('active');
+      applyAll();
+    }
+    function applySort() { applyAll(); }
+
+    function applyAll() {
+      if (!PRODUCTS.length) { renderEmpty('No data loaded'); return; }
+      const q = searchInput.value.toLowerCase().trim();
+      const sort = sortSelect.value;
+
+      filtered = PRODUCTS.filter(p => {
+        const matchFilter = activeFilter === 'all' || getSubcategory(p) === activeFilter || getBrandDisplay(p) === activeFilter;
+        const matchSearch = !q || getName(p).toLowerCase().includes(q) || getBrandDisplay(p).toLowerCase().includes(q) ||
+                            getSku(p).toLowerCase().includes(q) || getSubcategory(p).toLowerCase().includes(q) ||
+                            getCategory(p).toLowerCase().includes(q);
+        return matchFilter && matchSearch;
+      });
+
+      if (sort === 'price-asc') filtered.sort((a,b) => getPrice(a).selling_price - getPrice(b).selling_price);
+      else if (sort === 'price-desc') filtered.sort((a,b) => getPrice(b).selling_price - getPrice(a).selling_price);
+      else if (sort === 'discount') filtered.sort((a,b) => getPrice(b).discount_percent - getPrice(a).discount_percent);
+      else if (sort === 'stock') filtered.sort((a,b) => getStock(b) - getStock(a));
+      else if (sort === 'name') filtered.sort((a,b) => getName(a).localeCompare(getName(b)));
+
+      renderGrid();
+    }
+
+    function renderEmpty(msg) {
+      productGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📂</div><h3>${msg || 'No data'}</h3><p>Upload a JSON file to begin.</p></div>`;
+      resultCount.textContent = 'No data loaded';
+    }
+
+    function renderGrid() {
+      if (!PRODUCTS.length) { renderEmpty(); return; }
+      if (!filtered.length) {
+        productGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><h3>No matches</h3><p>Try adjusting search or filters.</p></div>`;
+        resultCount.innerHTML = `Showing <strong>0</strong> of <strong>${PRODUCTS.length}</strong> products`;
+        return;
+      }
+      resultCount.innerHTML = `Showing <strong>${filtered.length}</strong> of <strong>${PRODUCTS.length}</strong> products`;
+
+      productGrid.innerHTML = filtered.map((p, idx) => {
+        const imgs = getImages(p);
+        const price = getPrice(p);
+        const disc = Math.round(price.discount_percent);
+        const brand = getBrandDisplay(p);
+        const subcat = getSubcategory(p);
+        const name = getName(p);
+        const realIdx = PRODUCTS.indexOf(p);
+        const topSpecs = getSpecs(p).slice(0,3);
+
+        return `<div class="product-card" onclick="openDetail(${realIdx})">
+          <div class="card-img-wrap">
+            <img src="${imgs[0] || ''}" alt="${name}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><rect fill=%22%23f0f0f0%22 width=%22200%22 height=%22200%22/><text x=%22100%22 y=%22100%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2214%22>No Image</text></svg>'">
+            <div class="card-badges">
+              ${disc > 0 ? `<span class="badge badge-discount">${disc}% off</span>` : ''}
+              <span class="badge badge-brand">${brand}</span>
+            </div>
+            ${imgs.length > 1 ? `<div class="img-nav">${imgs.slice(0,4).map((_,j) => `<button class="img-dot ${j===0?'active':''}" onclick="event.stopPropagation();cycleImg(this,${realIdx},${j})"></button>`).join('')}</div>` : ''}
+          </div>
+          <div class="card-body">
+            <div class="card-sub">${subcat}</div>
+            <div class="card-name">${name}</div>
+            <div class="card-specs">${topSpecs.map(s => `<span class="spec-pill">${s.value}</span>`).join('')}</div>
+            <div class="card-price">
+              <span class="price-sell">${fmt(price.selling_price)}</span>
+              ${price.mrp > price.selling_price ? `<span class="price-mrp">${fmt(price.mrp)}</span><span class="price-save">Save ${fmt(price.mrp - price.selling_price)}</span>` : ''}
+            </div>
+            <div class="card-actions">
+              <button class="btn-primary" onclick="event.stopPropagation();showToast('Added to cart (demo)')">Add to Cart</button>
+              <button class="btn-sec" onclick="event.stopPropagation();showToast('Wishlisted!')">♡</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ─── image cycling ────────────────────────────────────
+    window.cycleImg = function(dotEl, prodIdx, imgIdx) {
+      const card = dotEl.closest('.product-card');
+      const img = card.querySelector('img');
+      const imgs = getImages(PRODUCTS[prodIdx]);
+      if (imgs[imgIdx]) {
+        img.src = imgs[imgIdx];
+        card.querySelectorAll('.img-dot').forEach((d,i) => d.classList.toggle('active', i===imgIdx));
+      }
+    };
+
+    // ─── detail panel ──────────────────────────────────────
+    window.openDetail = function(idx) {
+      if (!PRODUCTS.length || idx < 0 || idx >= PRODUCTS.length) return;
+      currentProduct = PRODUCTS[idx];
+      const p = currentProduct;
+      const imgs = getImages(p);
+      const price = getPrice(p);
+      const disc = Math.round(price.discount_percent);
+      const specs = getSpecs(p);
+      const features = getFeatures(p);
+      const boxItems = getBoxItems(p);
+      const addInfo = getAddInfo(p);
+      const brand = getBrandDisplay(p);
+      const subcat = getSubcategory(p);
+      const cat = getCategory(p);
+      const name = getName(p);
+      const sku = getSku(p);
+      const serial = getSerialId(p);
+      const stock = getStock(p);
+      const completeness = getCompleteness(p);
+      const shortDesc = getShortDesc(p);
+      const warrantyPeriod = getWarrantyPeriod(p);
+      const warrantyType = getWarrantyType(p);
+
+      detailBreadcrumb.innerHTML = `${cat} <span>/ ${subcat}</span> <span>/ ${brand}</span>`;
+      detailGallery.innerHTML = `
+        <div class="gallery-main"><img id="galMain" src="${imgs[0] || ''}" alt="${name}"></div>
+        ${imgs.length > 1 ? `<div class="gallery-thumbs">${imgs.map((src,i) => `<div class="thumb ${i===0?'active':''}" onclick="switchImg(${i})"><img src="${src}" alt=""></div>`).join('')}</div>` : ''}
+      `;
+
+      detailInfo.innerHTML = `
+        <div><div class="detail-sku">SKU: ${sku} ${serial ? '· ID: '+serial : ''}</div><div class="detail-name">${name}</div></div>
+        <div class="detail-price-block"><div class="detail-sell">${fmt(price.selling_price)}</div><div class="detail-mrp-wrap"><div class="detail-mrp">MRP ${fmt(price.mrp)}</div>${disc>0?`<div class="detail-save-badge">${disc}% OFF</div>`:''}</div></div>
+        <div class="stock-row"><div class="stock-dot"></div><div class="stock-txt">${stock} units in stock</div></div>
+        ${shortDesc ? `<div class="detail-short-desc">${shortDesc}</div>` : ''}
+        ${features.length ? `<div><div class="detail-section-title">Key Features</div><ul class="feature-list">${features.map(f=>`<li>${f}</li>`).join('')}</ul></div>` : ''}
+        ${specs.length ? `<div><div class="detail-section-title">Specifications</div><table class="spec-table">${specs.map(s=>`<tr><td>${s.key}</td><td>${s.value}</td></tr>`).join('')}</table></div>` : ''}
+        ${Object.keys(addInfo).filter(k=>addInfo[k]).length ? `<div><div class="detail-section-title">Additional Info</div><table class="spec-table">${addInfo.material?`<tr><td>Material</td><td>${addInfo.material}</td></tr>`:''}${addInfo.weight?`<tr><td>Weight</td><td>${addInfo.weight}</td></tr>`:''}${addInfo.country_of_origin?`<tr><td>Country of Origin</td><td>${addInfo.country_of_origin}</td></tr>`:''}</table></div>` : ''}
+        ${boxItems.length ? `<div><div class="detail-section-title">In the Box</div><div class="box-items">${boxItems.map(b=>`<span class="box-item">${b}</span>`).join('')}</div></div>` : ''}
+        <div class="warranty-block"><div class="wr-icon">🛡️</div><div><div class="wr-text">${warrantyPeriod} Warranty</div><div class="wr-sub">${warrantyType}</div></div></div>
+        <div><div class="detail-section-title" style="margin-bottom:8px">Data Quality</div><div class="data-quality"><span style="font-size:12px;color:var(--text-sec);min-width:80px">Completeness</span><div class="completeness-bar"><div class="completeness-fill" style="width:${completeness}%"></div></div><span class="completeness-pct">${completeness}%</span></div></div>
+        <div class="detail-actions"><button class="btn-primary" onclick="showToast('Added to cart (demo)')">Add to Cart</button><button class="btn-sec" onclick="showToast('Wishlisted!')">♡ Wishlist</button><button class="btn-sec" onclick="showToast('Shared!')">↗ Share</button></div>
+      `;
+      detailOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.switchImg = function(idx) {
+      const p = currentProduct;
+      const imgs = getImages(p);
+      const main = document.getElementById('galMain');
+      if (main && imgs[idx]) main.src = imgs[idx];
+      document.querySelectorAll('.thumb').forEach((t,i) => t.classList.toggle('active', i===idx));
+    };
+
+    window.closeDetail = function(e) {
+      if (e && e.target !== detailOverlay) return;
+      closeDetailBtn();
+    };
+    function closeDetailBtn() {
+      detailOverlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    window.closeDetailBtn = closeDetailBtn;
+
+    // ─── view toggle ──────────────────────────────────────
+    window.setView = function(v) {
+      document.querySelectorAll('.nav-pill').forEach(b => b.classList.remove('active'));
+      if (event && event.target) event.target.classList.add('active');
+    };
+
+    // ─── keyboard ──────────────────────────────────────────
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetailBtn(); });
+
+    // ─── wire search ──────────────────────────────────────
+    searchInput.addEventListener('input', applyAll);
+
+    // ─── initial state ────────────────────────────────────
+    renderEmpty('Upload a JSON file to get started');
+    uploadZone.classList.remove('hidden');
+    searchInput.disabled = true;
+    sortSelect.disabled = true;
+
+    console.log('✅ Build Mart ready – upload your JSON file.');
+  })();
+</script>
+</body>
+</html>
