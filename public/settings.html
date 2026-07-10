@@ -224,22 +224,41 @@
                 </div>
             </div>
 
-            <!-- RESTORE SYSTEM -->
-            <div class="col-md-12 mt-2">
-                <div class="card border border-danger">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h3 class="card-title text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i> Restore System</h3>
-                            <p class="text-muted mb-0">Upload a previously downloaded JSON backup. <strong>Warning:</strong> This will overwrite all current data.</p>
+                        <!-- SMART UNIVERSAL JSON IMPORT & RESTORE SYSTEM -->
+            <div class="col-md-12 mt-4">
+                <div class="card border border-primary bg-white shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-cloud-upload-fill icon-lg text-primary me-3 mb-0" style="font-size: 2.2rem;"></i>
+                            <div>
+                                <h3 class="card-title mb-1" style="font-size: 1.3rem;">Smart Catalog Uploader & Restore Hub</h3>
+                                <p class="text-muted mb-0">Upload any backup file (like <code>buildmart_backup_2026-07-03 (2).json</code> or any exported JSON array/catalog).</p>
+                            </div>
                         </div>
-                        <div class="col-md-4 text-end">
-                            <form id="restoreForm" class="d-flex align-items-center justify-content-end">
-                                <input type="file" class="form-control me-2" id="backupFile" accept=".json" required>
-                                <button type="submit" class="btn btn-danger btn-custom">Restore</button>
-                            </form>
+
+                        <div class="row g-3 align-items-center mt-2">
+                            <div class="col-md-5">
+                                <label class="form-label fw-bold text-dark mb-1">1. Select Backup / Catalog JSON File</label>
+                                <input type="file" class="form-control" id="backupFile" accept=".json" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold text-dark mb-1">2. Choose Upload Mode</label>
+                                <select class="form-select" id="uploadMode">
+                                    <option value="merge">🔀 Merge & Update (Keep existing + add new)</option>
+                                    <option value="replace">🔄 Replace Entire Catalog (Overwrite store)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="button" onclick="handleSmartRestore()" class="btn btn-primary btn-custom w-100 mt-4">
+                                    <i class="bi bi-upload me-2"></i> Apply to Store
+                                </button>
+                            </div>
                         </div>
+
+                        <div id="uploadPreviewStatus" class="mt-3 d-none"></div>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     </div>
@@ -301,30 +320,89 @@
             URL.revokeObjectURL(url);
         }
 
-        document.getElementById('restoreForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const file = document.getElementById('backupFile').files[0];
-            if (!file) return alert("Please select a JSON file.");
-            if (!confirm("WARNING: This will replace all existing products. Proceed?")) return;
+                function handleSmartRestore() {
+            const fileInput = document.getElementById('backupFile');
+            const mode = document.getElementById('uploadMode').value;
+            const statusBox = document.getElementById('uploadPreviewStatus');
 
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert("Please select a valid .json backup file first.");
+                return;
+            }
+
+            const file = fileInput.files[0];
             const reader = new FileReader();
+
             reader.onload = (event) => {
                 try {
-                    const parsed = JSON.parse(event.target.result);
-                    if (!parsed.metadata || !parsed.products) {
-                        throw new Error("Invalid format. Missing metadata or products.");
+                    const rawText = event.target.result;
+                    const parsed = JSON.parse(rawText);
+
+                    // Intelligent format extraction
+                    let incomingProducts = [];
+                    let metadata = { project: "BUILD MART", last_serial_id: 1000030 };
+
+                    if (Array.isArray(parsed)) {
+                        incomingProducts = parsed;
+                    } else if (parsed.products && Array.isArray(parsed.products)) {
+                        incomingProducts = parsed.products;
+                        if (parsed.metadata) metadata = { ...metadata, ...parsed.metadata };
+                    } else {
+                        throw new Error("Unable to locate a products array inside the uploaded file.");
                     }
-                    const success = db.saveData(parsed);
-                    if (success) {
-                        alert("Database restored successfully!");
-                        window.location.reload();
+
+                    if (incomingProducts.length === 0) {
+                        alert("The selected JSON file contains 0 products.");
+                        return;
                     }
-                } catch(err) {
-                    alert("Failed to restore: " + err.message);
+
+                    const currentData = db.getData() || { metadata: {}, products: [] };
+                    let finalProducts = [];
+
+                    if (mode === 'replace') {
+                        if (!confirm(`⚠️ Replace Entire Catalog: Are you sure you want to replace your current store products with ${incomingProducts.length} products from ${file.name}?`)) {
+                            return;
+                        }
+                        finalProducts = incomingProducts;
+                    } else {
+                        // Merge Mode: update by SKU or append
+                        const existingMap = new Map();
+                        (currentData.products || []).forEach(p => existingMap.set(p.sku, p));
+
+                        incomingProducts.forEach(p => {
+                            if (p.sku) {
+                                existingMap.set(p.sku, { ...(existingMap.get(p.sku) || {}), ...p });
+                            } else {
+                                p.sku = "BM-PT-" + Date.now() + Math.floor(Math.random() * 1000);
+                                existingMap.set(p.sku, p);
+                            }
+                        });
+
+                        finalProducts = Array.from(existingMap.values());
+                    }
+
+                    const finalData = {
+                        metadata: { ...metadata, total_products: finalProducts.length, last_updated: new Date().toISOString() },
+                        products: finalProducts
+                    };
+
+                    db.saveData(finalData);
+
+                    statusBox.className = "mt-3 alert alert-success";
+                    statusBox.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i> Successfully applied <strong>${incomingProducts.length}</strong> products (${mode.toUpperCase()} mode). Total products now in store: <strong>${finalProducts.length}</strong>.`;
+
+                    setTimeout(() => {
+                        window.location.href = "products.html";
+                    }, 1200);
+
+                } catch (err) {
+                    statusBox.className = "mt-3 alert alert-danger";
+                    statusBox.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i> Error reading JSON: ${err.message}`;
                 }
             };
+
             reader.readAsText(file);
-        });
-    </script>
+        }
+</script>
 </body>
 </html>
