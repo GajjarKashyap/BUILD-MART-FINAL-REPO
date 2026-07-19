@@ -504,6 +504,9 @@
             </div>
 
             <div class="action-strip">
+                <button type="button" id="superSaveGitButton" class="btn-minimal btn-primary-minimal" onclick="BuildMartGitSave.run(this)">
+                    <i class="bi bi-shield-check"></i> Super Save to Git
+                </button>
                 <a href="add-product.html" class="btn-minimal btn-primary-minimal">
                     <i class="bi bi-plus-lg"></i> New Product
                 </a>
@@ -640,6 +643,7 @@
 
     <script src="auth.js"></script>
     <script src="db.js?v=2026.07.10.CATALOG28"></script>
+    <script src="git-super-save.js?v=2026.07.20"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             fetchStats();
