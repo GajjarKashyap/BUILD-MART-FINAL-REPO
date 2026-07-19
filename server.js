@@ -111,4 +111,8 @@ if (require.main === module) {
     });
 }
 
-module.exports = { app, parseAllowedProductUrl };
+// Vercel requires the default CommonJS export to be the Express function.
+// Keep named properties attached for local tests and tooling.
+module.exports = app;
+module.exports.app = app;
+module.exports.parseAllowedProductUrl = parseAllowedProductUrl;
