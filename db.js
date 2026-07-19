@@ -1,6 +1,13 @@
 // db.js - Browser Storage Database Manager
 
 const DB_KEY = 'buildmart_db';
+const DEFAULT_CATEGORY_TAXONOMY = {
+    "Power Tools": ["Drill Machines", "Angle Grinders", "Circular Saws", "Jigsaws", "Rotary Hammers", "Impact Drivers", "Sanders", "Heat Guns", "Electric Screwdrivers", "Polishers"],
+    "Hand Tools": ["Hammers", "Screwdrivers", "Pliers", "Wrenches", "Spanners", "Chisels", "Measuring Tapes", "Utility Knives", "Clamps", "Spirit Levels"],
+    "Tools & Accessories": ["Drill Bits", "Screwdriver Bits", "Saw Blades", "Grinding Wheels", "Cutting Discs", "Sanding Discs", "Hole Saws", "Router Bits", "Wire Brushes", "Polishing Pads"],
+    "Fasteners & Small Hardware": ["Screws", "Nails", "Bolts", "Washers", "Wall Plugs & Anchors", "Rivets", "Staples", "Hooks & Eyes", "Pins & Clips"],
+    "Wood Glues & Adhesives": ["Wood Glues", "General Adhesives", "PVA Adhesives", "Epoxy Adhesives", "Contact Adhesives", "Construction Adhesives", "Instant Adhesives"]
+};
 
 // Default Seed Hardware Catalog for Vercel, GitHub Pages, and fresh browser visitors
 const DEFAULT_SEED_PRODUCTS = [
@@ -2570,11 +2577,15 @@ class Database {
                 // Auto-seed default catalog if localStorage is missing or has fewer products than the full 28-item catalog
         if (!existing || !existing.products || existing.products.length < 15) {
             const initialData = {
-                metadata: { project: "BUILD MART", last_serial_id: 1000030 },
+                metadata: { project: "BUILD MART", last_serial_id: 1000030, category_taxonomy: JSON.parse(JSON.stringify(DEFAULT_CATEGORY_TAXONOMY)) },
                 products: DEFAULT_SEED_PRODUCTS
             };
             localStorage.setItem(DB_KEY, JSON.stringify(initialData));
             console.log("Auto-seeded full 28-item BuildMart hardware catalog!");
+        } else if (!existing.metadata || !existing.metadata.category_taxonomy) {
+            existing.metadata = existing.metadata || {};
+            existing.metadata.category_taxonomy = JSON.parse(JSON.stringify(DEFAULT_CATEGORY_TAXONOMY));
+            localStorage.setItem(DB_KEY, JSON.stringify(existing));
         }
     }
 
@@ -2633,9 +2644,521 @@ class Database {
         return this.getData().products || [];
     }
 
+    getCategoryTaxonomy() {
+        const data = this.getData();
+        const taxonomy = data.metadata && data.metadata.category_taxonomy;
+        const source = taxonomy && typeof taxonomy === 'object' ? taxonomy : DEFAULT_CATEGORY_TAXONOMY;
+        return Object.fromEntries(Object.entries(source).map(([category, subcategories]) => [
+            this.normalizeWhitespace(category),
+            [...new Set((Array.isArray(subcategories) ? subcategories : [])
+                .map(value => this.normalizeWhitespace(value))
+                .filter(Boolean))]
+        ]).filter(([category]) => category));
+    }
+
+    saveCategoryTaxonomy(taxonomy) {
+        const data = this.getData();
+        data.metadata = data.metadata || {};
+        data.metadata.category_taxonomy = taxonomy;
+        this.saveData(data);
+        return this.getCategoryTaxonomy();
+    }
+
+    addCategory(name) {
+        const category = this.normalizeWhitespace(name);
+        if (!category) return { ok: false, message: 'Enter a category name.' };
+        const taxonomy = this.getCategoryTaxonomy();
+        const existing = Object.keys(taxonomy).find(key => key.toLowerCase() === category.toLowerCase());
+        if (existing) return { ok: false, message: `${existing} already exists.` };
+        taxonomy[category] = [];
+        this.saveCategoryTaxonomy(taxonomy);
+        return { ok: true, message: `${category} added.` };
+    }
+
+    addSubcategory(categoryName, name) {
+        const category = this.normalizeWhitespace(categoryName);
+        const subcategory = this.normalizeWhitespace(name);
+        const taxonomy = this.getCategoryTaxonomy();
+        if (!taxonomy[category]) return { ok: false, message: 'Select a valid category.' };
+        if (!subcategory) return { ok: false, message: 'Enter a subcategory name.' };
+        const existing = taxonomy[category].find(value => value.toLowerCase() === subcategory.toLowerCase());
+        if (existing) return { ok: false, message: `${existing} already exists under ${category}.` };
+        taxonomy[category].push(subcategory);
+        this.saveCategoryTaxonomy(taxonomy);
+        return { ok: true, message: `${subcategory} added under ${category}.` };
+    }
+
+    removeCategory(name) {
+        const category = this.normalizeWhitespace(name);
+        const taxonomy = this.getCategoryTaxonomy();
+        if (!Object.prototype.hasOwnProperty.call(taxonomy, category)) return { ok: false, message: 'Category not found.' };
+        delete taxonomy[category];
+        this.saveCategoryTaxonomy(taxonomy);
+        return { ok: true, message: `${category} removed from selectable categories.` };
+    }
+
+    removeSubcategory(categoryName, name) {
+        const category = this.normalizeWhitespace(categoryName);
+        const subcategory = this.normalizeWhitespace(name);
+        const taxonomy = this.getCategoryTaxonomy();
+        if (!taxonomy[category]) return { ok: false, message: 'Category not found.' };
+        const next = taxonomy[category].filter(value => value.toLowerCase() !== subcategory.toLowerCase());
+        if (next.length === taxonomy[category].length) return { ok: false, message: 'Subcategory not found.' };
+        taxonomy[category] = next;
+        this.saveCategoryTaxonomy(taxonomy);
+        return { ok: true, message: `${subcategory} removed from ${category}.` };
+    }
+
     getProduct(sku) {
         const products = this.getProducts();
         return products.find(p => p.sku === sku) || null;
+    }
+
+    getLatestProduct() {
+        const products = this.getAllProducts();
+        return products.length ? products[products.length - 1] : null;
+    }
+
+    getNewSerialId() {
+        const data = this.getData();
+        const stored = Number(data.metadata && data.metadata.last_serial_id) || 1000000;
+        const highest = (data.products || []).reduce((max, product) => {
+            const serial = Number(product.product_serial_id);
+            return Number.isFinite(serial) ? Math.max(max, serial) : max;
+        }, stored);
+        return highest + 1;
+    }
+
+    checkSkuExists(sku) {
+        const normalized = String(sku || '').trim().toLowerCase();
+        return this.getAllProducts().some(product =>
+            String(product.sku || '').trim().toLowerCase() === normalized
+        );
+    }
+
+    generateSku(category, subcategory) {
+        const categoryCodes = {
+            "Power Tools": "PT",
+            "Hand Tools": "HT",
+            "Tools & Accessories": "TA",
+            "Fasteners & Small Hardware": "FH",
+            "Wood Glues & Adhesives": "AD"
+        };
+        const subcategoryCodes = {
+            "Drill Machines": "DR", "Angle Grinders": "AG", "Circular Saws": "CS",
+            "Jigsaws": "JS", "Rotary Hammers": "RH", "Impact Drivers": "ID",
+            "Sanders": "SD", "Heat Guns": "HG", "Electric Screwdrivers": "ES",
+            "Polishers": "PL", "Hammers": "HM", "Screwdrivers": "SC",
+            "Pliers": "PR", "Wrenches": "WR", "Spanners": "SP", "Chisels": "CH",
+            "Measuring Tapes": "MT", "Utility Knives": "UK", "Clamps": "CL",
+            "Spirit Levels": "SL", "Drill Bits": "DB", "Screwdriver Bits": "SB",
+            "Saw Blades": "SW", "Grinding Wheels": "GW", "Cutting Discs": "CD",
+            "Sanding Discs": "SD", "Hole Saws": "HS", "Router Bits": "RB",
+            "Wire Brushes": "WB", "Polishing Pads": "PP", "Wood Glues": "WG",
+            "General Adhesives": "GA", "PVA Adhesives": "PV", "Epoxy Adhesives": "EA",
+            "Contact Adhesives": "CA", "Construction Adhesives": "CO", "Instant Adhesives": "IA",
+            "Screws": "SC", "Nails": "NL", "Nuts": "NT", "Bolts": "BL",
+            "Washers": "WS", "Wall Plugs & Anchors": "WA", "Rivets": "RV",
+            "Staples": "ST", "Hooks & Eyes": "HE", "Pins & Clips": "PC"
+        };
+
+        const codeFromName = value => {
+            const words = this.normalizeWhitespace(value).replace(/&/g, ' ').split(/\s+/).filter(Boolean);
+            const code = words.length > 1
+                ? words.map(word => word[0]).join('')
+                : (words[0] || 'OT').slice(0, 2);
+            return code.toUpperCase().slice(0, 3).padEnd(2, 'X');
+        };
+        const categoryCode = categoryCodes[category] || codeFromName(category);
+        const subcategoryCode = subcategoryCodes[subcategory] || codeFromName(subcategory);
+        const prefix = `BM-${categoryCode}-${subcategoryCode}-`;
+        const highest = this.getAllProducts().reduce((max, product) => {
+            const sku = String(product.sku || '');
+            if (!sku.startsWith(prefix)) return max;
+            const sequence = Number(sku.slice(prefix.length));
+            return Number.isFinite(sequence) ? Math.max(max, sequence) : max;
+        }, 0);
+        return prefix + String(highest + 1).padStart(4, '0');
+    }
+
+    getFieldValues() {
+        const uniqueRecent = (values) => [...new Set(values.filter(Boolean).map(String))].slice(-8).reverse();
+        const products = this.getAllProducts();
+        return {
+            brands: uniqueRecent(products.map(p => p.brand && p.brand.display ? p.brand.display : p.brand)),
+            materials: uniqueRecent(products.map(p => p.additional_info && p.additional_info.material)),
+            weights: uniqueRecent(products.map(p => p.additional_info && p.additional_info.weight)),
+            countries: uniqueRecent(products.map(p => p.additional_info && p.additional_info.country_of_origin)),
+            warranties: uniqueRecent(products.map(p => p.warranty_period))
+        };
+    }
+
+    normalizeWhitespace(value) {
+        return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+    }
+
+    normalizeBrand(value) {
+        const raw = this.normalizeWhitespace(value && value.display ? value.display : value);
+        if (!raw) return '';
+        const known = {
+            'bosch': 'BOSCH', 'dewalt': 'DEWALT', 'de walt': 'DEWALT',
+            'makita': 'Makita', 'milwaukee': 'Milwaukee', 'stanley': 'STANLEY',
+            'black+decker': 'BLACK+DECKER', 'black & decker': 'BLACK+DECKER',
+            'ibell': 'iBELL', 'ingco': 'INGCO', 'taparia': 'Taparia',
+            'hikoki': 'HiKOKI', 'hitachi': 'Hitachi', 'dremel': 'Dremel',
+            '3m': '3M', 'pidilite': 'Pidilite', 'fevicol': 'Fevicol',
+            'loctite': 'LOCTITE', 'araldite': 'Araldite'
+        };
+        const key = raw.toLowerCase();
+        if (known[key]) return known[key];
+        return raw
+            .toLowerCase()
+            .replace(/\b[a-z]/g, letter => letter.toUpperCase());
+    }
+
+    normalizeUnitText(value) {
+        return this.normalizeWhitespace(value)
+            .replace(/(\d+(?:\.\d+)?)\s*(?:watts?|watt)\b/gi, '$1 W')
+            .replace(/(\d+(?:\.\d+)?)\s*(?:volts?|volt)\b/gi, '$1 V')
+            .replace(/(\d+(?:\.\d+)?)\s*(?:millimeters?|millimetres?|mm)\b/gi, '$1 mm')
+            .replace(/(\d+(?:\.\d+)?)\s*(?:centimeters?|centimetres?|cm)\b/gi, '$1 cm')
+            .replace(/(\d+(?:\.\d+)?)\s*(?:kilograms?|kilogram|kgs?|kg)\b/gi, '$1 kg')
+            .replace(/(\d+(?:\.\d+)?)\s*(?:grams?|gram|gms?|gm|g)\b/gi, '$1 g')
+            .replace(/(\d+(?:\.\d+)?)\s*(?:newton[\s-]*meters?|newton[\s-]*metres?|nm)\b/gi, '$1 Nm')
+            .replace(/(\d+(?:\.\d+)?)\s*(?:ampere[\s-]*hours?|amp[\s-]*hours?|ah)\b/gi, '$1 Ah')
+            .replace(/(\d+(?:\.\d+)?)\s*(?:revolutions per minute|r\.?p\.?m\.?)\b/gi, '$1 RPM')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    normalizeWarranty(value) {
+        return this.normalizeWhitespace(value)
+            .replace(/(\d+(?:\.\d+)?)\s*months?\b/gi, '$1 Months')
+            .replace(/(\d+(?:\.\d+)?)\s*years?\b/gi, '$1 Years')
+            .replace(/(\d+(?:\.\d+)?)\s*days?\b/gi, '$1 Days');
+    }
+
+    normalizeCountry(value) {
+        const raw = this.normalizeWhitespace(value);
+        if (!raw) return '';
+        const known = {
+            'india': 'India', 'china': 'China', 'prc': 'China',
+            'peoples republic of china': 'China', "people's republic of china": 'China',
+            'germany': 'Germany', 'japan': 'Japan', 'usa': 'United States',
+            'u.s.a.': 'United States', 'united states of america': 'United States',
+            'uk': 'United Kingdom', 'u.k.': 'United Kingdom',
+            'taiwan': 'Taiwan', 'south korea': 'South Korea'
+        };
+        return known[raw.toLowerCase()] || raw.replace(/\b[a-z]/g, letter => letter.toUpperCase());
+    }
+
+    canonicalProductUrl(value) {
+        const raw = this.normalizeWhitespace(value);
+        if (!raw) return '';
+        try {
+            const parsed = new URL(raw);
+            const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+            const amazonMatch = parsed.pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i);
+            if (host.includes('amazon.') && amazonMatch) {
+                return `https://www.${host}/dp/${amazonMatch[1].toUpperCase()}`;
+            }
+            if (host.includes('flipkart.com')) {
+                const pid = parsed.searchParams.get('pid');
+                const cleanPath = parsed.pathname.replace(/\/+$/, '');
+                return `https://www.flipkart.com${cleanPath}${pid ? '?pid=' + encodeURIComponent(pid) : ''}`;
+            }
+            parsed.hash = '';
+            ['ref', 'tag', 'linkCode', 'psc', 'th', 'dib', 'dib_tag', 'qid', 'sr', 'sprefix']
+                .forEach(key => parsed.searchParams.delete(key));
+            return parsed.href.replace(/\/$/, '');
+        } catch (_) {
+            return raw;
+        }
+    }
+
+    getProductSourceId(value) {
+        const url = this.canonicalProductUrl(value);
+        if (!url) return '';
+        try {
+            const parsed = new URL(url);
+            const amazonMatch = parsed.pathname.match(/\/dp\/([A-Z0-9]{10})/i);
+            if (amazonMatch) return 'amazon:' + amazonMatch[1].toUpperCase();
+            const pid = parsed.searchParams.get('pid');
+            if (pid) return 'flipkart:' + pid.toUpperCase();
+        } catch (_) {}
+        return 'url:' + url.toLowerCase();
+    }
+
+    productNameSimilarity(left, right) {
+        const tokenize = value => {
+            const stop = new Set(['the', 'and', 'with', 'for', 'from', 'tool', 'tools', 'product']);
+            return new Set(
+                this.normalizeWhitespace(value)
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, ' ')
+                    .split(' ')
+                    .filter(token => token.length > 1 && !stop.has(token))
+            );
+        };
+        const a = tokenize(left);
+        const b = tokenize(right);
+        if (!a.size || !b.size) return 0;
+        const intersection = [...a].filter(token => b.has(token)).length;
+        const union = new Set([...a, ...b]).size;
+        return union ? intersection / union : 0;
+    }
+
+    findDuplicates(candidate, excludeSku = null) {
+        const candidateSku = this.normalizeWhitespace(candidate && candidate.sku).toUpperCase();
+        const candidateUrl = this.canonicalProductUrl(candidate && candidate.amazon_url);
+        const candidateSource = this.getProductSourceId(candidateUrl);
+        const candidateName = this.normalizeWhitespace(candidate && candidate.name);
+        const results = [];
+
+        this.getAllProducts().forEach(product => {
+            if (excludeSku && product.sku === excludeSku) return;
+            const reasons = [];
+            const productSku = this.normalizeWhitespace(product.sku).toUpperCase();
+            const productUrl = this.canonicalProductUrl(product.amazon_url);
+            const productSource = this.getProductSourceId(productUrl);
+            const similarity = this.productNameSimilarity(candidateName, product.name);
+
+            if (candidateSku && candidateSku === productSku) reasons.push('Same SKU');
+            if (candidateSource && candidateSource === productSource) reasons.push('Same source product ID');
+            else if (candidateUrl && candidateUrl === productUrl) reasons.push('Same product URL');
+            if (candidateName && similarity >= 0.82) reasons.push(`Similar name (${Math.round(similarity * 100)}%)`);
+
+            if (reasons.length) {
+                results.push({
+                    sku: product.sku,
+                    name: product.name,
+                    reasons,
+                    similarity
+                });
+            }
+        });
+        return results;
+    }
+
+    standardizeProduct(product) {
+        const p = { ...product };
+        const categoryMap = {
+            'power tools': 'Power Tools',
+            'hand tools': 'Hand Tools',
+            'tools & accessories': 'Tools & Accessories',
+            'tools and accessories': 'Tools & Accessories',
+            'fasteners & small hardware': 'Fasteners & Small Hardware',
+            'fasteners and small hardware': 'Fasteners & Small Hardware',
+            'fasteners': 'Fasteners & Small Hardware',
+            'small hardware': 'Fasteners & Small Hardware',
+            'wood glues & adhesives': 'Wood Glues & Adhesives',
+            'wood glues and adhesives': 'Wood Glues & Adhesives',
+            'adhesives & consumables': 'Wood Glues & Adhesives',
+            'adhesives and consumables': 'Wood Glues & Adhesives'
+        };
+        p.sku = this.normalizeWhitespace(p.sku).toUpperCase();
+        p.name = this.normalizeWhitespace(p.name);
+        p.category = categoryMap[this.normalizeWhitespace(p.category).toLowerCase()] || this.normalizeWhitespace(p.category);
+        const subcategoryMap = {
+            'wood glue': 'Wood Glues',
+            'wood glues': 'Wood Glues',
+            'general adhesive': 'General Adhesives',
+            'general adhesives': 'General Adhesives',
+            'pva adhesive': 'PVA Adhesives',
+            'pva adhesives': 'PVA Adhesives',
+            'epoxy adhesive': 'Epoxy Adhesives',
+            'epoxy adhesives': 'Epoxy Adhesives',
+            'contact adhesive': 'Contact Adhesives',
+            'contact adhesives': 'Contact Adhesives',
+            'construction adhesive': 'Construction Adhesives',
+            'construction adhesives': 'Construction Adhesives',
+            'instant adhesive': 'Instant Adhesives',
+            'instant adhesives': 'Instant Adhesives'
+        };
+        const rawSubcategory = this.normalizeWhitespace(p.subcategory);
+        p.subcategory = subcategoryMap[rawSubcategory.toLowerCase()] || rawSubcategory;
+        const brandDisplay = this.normalizeBrand(p.brand);
+        p.brand = { display: brandDisplay, normalized: brandDisplay.toLowerCase() };
+        p.amazon_url = this.canonicalProductUrl(p.amazon_url);
+        p.stock_quantity = Number(p.stock_quantity) || 0;
+        p.completeness_score = Number(p.completeness_score) || 0;
+        p.short_description = this.normalizeWhitespace(p.short_description);
+        p.warranty_period = this.normalizeWarranty(p.warranty_period);
+        p.warranty_type = this.normalizeWhitespace(p.warranty_type);
+
+        p.price = {
+            mrp: Number(p.price && p.price.mrp) || 0,
+            selling_price: Number(p.price && p.price.selling_price) || 0,
+            discount_percent: Number(p.price && p.price.discount_percent) || 0
+        };
+        if (p.pricing_basis && typeof p.pricing_basis === 'object') {
+            p.pricing_basis = {
+                quantity: Number(p.pricing_basis.quantity) || 0,
+                unit: ['pcs', 'g', 'kg'].includes(p.pricing_basis.unit) ? p.pricing_basis.unit : 'pcs',
+                price: Number(p.pricing_basis.price) || p.price.selling_price || 0,
+                grams_per_piece: Number(p.pricing_basis.grams_per_piece) || null,
+                pricing_rule: ['straight', 'bulk_5'].includes(p.pricing_basis.pricing_rule)
+                    ? p.pricing_basis.pricing_rule
+                    : 'straight',
+                rounding: 'nearest_rupee'
+            };
+        } else {
+            p.pricing_basis = null;
+        }
+        p.size_options = (Array.isArray(p.size_options) ? p.size_options : [])
+            .map((size, index) => ({
+                id: this.normalizeWhitespace(size.id) || `size-${index + 1}`,
+                value: Number(size.value) || this.normalizeWhitespace(size.value),
+                unit: ['mm', 'in'].includes(size.unit) ? size.unit : '',
+                label: this.normalizeWhitespace(size.label) || `${size.value} ${size.unit || ''}`.trim(),
+                base_price: Number(size.base_price) || 0,
+                images: [...new Set((Array.isArray(size.images) ? size.images : [])
+                    .map(image => this.normalizeWhitespace(image))
+                    .filter(Boolean))],
+                is_default: Boolean(size.is_default),
+                sort_order: Number.isFinite(Number(size.sort_order)) ? Number(size.sort_order) : index
+            }))
+            .filter(size => size.value !== '')
+            .sort((a, b) => a.sort_order - b.sort_order);
+        if (p.size_options.length && !p.size_options.some(size => size.is_default)) p.size_options[0].is_default = true;
+        let defaultSizeSeen = false;
+        p.size_options.forEach(size => {
+            if (!size.is_default) return;
+            if (defaultSizeSeen) size.is_default = false;
+            defaultSizeSeen = true;
+        });
+        p.sale_variants = (Array.isArray(p.sale_variants) ? p.sale_variants : [])
+            .map((variant, index) => ({
+                id: this.normalizeWhitespace(variant.id) || `pack-${index + 1}`,
+                label: this.normalizeWhitespace(variant.label),
+                size_id: this.normalizeWhitespace(variant.size_id),
+                size_label: this.normalizeWhitespace(variant.size_label),
+                is_combo: Boolean(variant.is_combo),
+                included_size_ids: [...new Set((Array.isArray(variant.included_size_ids) ? variant.included_size_ids : [])
+                    .map(id => this.normalizeWhitespace(id))
+                    .filter(Boolean))],
+                included_size_labels: this.normalizeWhitespace(variant.included_size_labels),
+                quantity: Number(variant.quantity) || 0,
+                unit: ['pcs', 'g', 'kg'].includes(variant.unit) ? variant.unit : 'pcs',
+                price: Number(variant.price) || 0,
+                mrp: Number(variant.mrp) || 0,
+                is_default: Boolean(variant.is_default),
+                price_source: variant.price_source === 'manual' ? 'manual' : 'calculated',
+                sort_order: Number.isFinite(Number(variant.sort_order)) ? Number(variant.sort_order) : index
+            }))
+            .filter(variant => variant.quantity > 0 && variant.price > 0)
+            .sort((a, b) => a.sort_order - b.sort_order);
+        if (p.sale_variants.length && !p.sale_variants.some(variant => variant.is_default)) {
+            p.sale_variants[0].is_default = true;
+        }
+        let defaultSeen = false;
+        p.sale_variants.forEach(variant => {
+            if (!variant.is_default) return;
+            if (defaultSeen) variant.is_default = false;
+            defaultSeen = true;
+        });
+        if (p.price.mrp > 0 && p.price.selling_price > 0) {
+            p.price.discount_percent = Number((((p.price.mrp - p.price.selling_price) / p.price.mrp) * 100).toFixed(2));
+        }
+
+        const info = p.additional_info || {};
+        p.additional_info = {
+            material: this.normalizeWhitespace(info.material),
+            weight: this.normalizeUnitText(info.weight),
+            country_of_origin: this.normalizeCountry(info.country_of_origin)
+        };
+
+        const uniqueStrings = values => {
+            const seen = new Set();
+            return (Array.isArray(values) ? values : []).map(value => this.normalizeWhitespace(value)).filter(value => {
+                const key = value.toLowerCase();
+                if (!value || seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        };
+        p.features = uniqueStrings(p.features);
+        p.box_items = uniqueStrings(p.box_items);
+        p.specifications = (Array.isArray(p.specifications) ? p.specifications : [])
+            .map(spec => ({
+                key: this.normalizeWhitespace(spec && spec.key),
+                value: this.normalizeUnitText(spec && spec.value)
+            }))
+            .filter(spec => spec.key || spec.value)
+            .filter((spec, index, list) =>
+                list.findIndex(item =>
+                    item.key.toLowerCase() === spec.key.toLowerCase() &&
+                    item.value.toLowerCase() === spec.value.toLowerCase()
+                ) === index
+            );
+        p.images = p.images && typeof p.images === 'object' ? p.images : { amazon: [] };
+        p.images.amazon = uniqueStrings(p.images.amazon);
+        return p;
+    }
+
+    auditProduct(product) {
+        const issues = [];
+        const add = (code, severity, label, field) => issues.push({ code, severity, label, field });
+        const brand = product.brand && product.brand.display ? product.brand.display : product.brand;
+        const info = product.additional_info || {};
+        const price = product.price || {};
+        const images = product.images && Array.isArray(product.images.amazon) ? product.images.amazon : [];
+        const warrantyExempt = product.category === 'Fasteners & Small Hardware' &&
+            ['Screws', 'Nails', 'Bolts'].includes(product.subcategory);
+        const required = [
+            ['sku', product.sku, 'SKU'],
+            ['category', product.category, 'Category'],
+            ['subcategory', product.subcategory, 'Subcategory'],
+            ['name', product.name, 'Product name'],
+            ['brand', brand, 'Brand'],
+            ['amazon_url', product.amazon_url, 'Source URL'],
+            ['material', info.material, 'Material'],
+            ['weight', info.weight, 'Weight'],
+            ['country_of_origin', info.country_of_origin, 'Country of origin'],
+            ['short_description', product.short_description, 'Short description']
+        ];
+        if (!warrantyExempt) {
+            required.push(
+                ['warranty_period', product.warranty_period, 'Warranty period'],
+                ['warranty_type', product.warranty_type, 'Warranty type']
+            );
+        }
+        required.forEach(([field, value, label]) => {
+            if (!this.normalizeWhitespace(value)) add('missing_' + field, 'error', `Missing ${label}`, field);
+        });
+        if (!(Number(price.selling_price) > 0)) add('invalid_price', 'error', 'Selling price must be greater than zero', 'price');
+        if (!(Number(price.mrp) > 0)) add('invalid_mrp', 'error', 'MRP must be greater than zero', 'mrp');
+        if (Number(price.mrp) > 0 && Number(price.selling_price) > Number(price.mrp)) {
+            add('price_above_mrp', 'error', 'Selling price is greater than MRP', 'price');
+        }
+        if (Number(product.stock_quantity) < 0) add('negative_stock', 'error', 'Stock cannot be negative', 'stock_quantity');
+        if (!Array.isArray(product.features) || !product.features.length) add('missing_features', 'error', 'No product features', 'features');
+        if (!Array.isArray(product.specifications) || !product.specifications.length) {
+            add('missing_specs', 'warning', 'No specifications collected', 'specifications');
+        } else if (product.specifications.some(spec => !this.normalizeWhitespace(spec.key) || !this.normalizeWhitespace(spec.value))) {
+            add('incomplete_specs', 'warning', 'One or more specifications are incomplete', 'specifications');
+        }
+        if (!images.length) {
+            add('missing_images', 'error', 'No product images', 'images');
+        } else {
+            const seenImages = new Set();
+            images.forEach(image => {
+                const normalized = this.normalizeWhitespace(image).toLowerCase();
+                try { new URL(image); } catch (_) { add('invalid_image_url', 'error', 'Invalid image URL', 'images'); }
+                if (seenImages.has(normalized)) add('duplicate_image', 'warning', 'Duplicate image URL', 'images');
+                seenImages.add(normalized);
+            });
+        }
+        const duplicates = this.findDuplicates(product, product.sku);
+        if (duplicates.length) add('duplicate_product', 'warning', `Possible duplicate of ${duplicates[0].sku}`, 'name');
+        return issues;
+    }
+
+    standardizeAllProducts() {
+        const data = this.getData();
+        data.products = (data.products || []).map(product => this.standardizeProduct(product));
+        this.saveData(data);
+        return data.products.length;
     }
 
     deleteProduct(sku) {
@@ -2645,45 +3168,138 @@ class Database {
     }
 
     getStats() {
-        const products = this.getProducts();
+        const products = this.getAllProducts();
         const categories = {};
         let totalValue = 0;
+        let totalImages = 0;
+        const brands = new Set();
+        const now = new Date();
+        const isToday = value => {
+            if (!value) return false;
+            const date = new Date(value);
+            return !Number.isNaN(date.getTime()) &&
+                date.getFullYear() === now.getFullYear() &&
+                date.getMonth() === now.getMonth() &&
+                date.getDate() === now.getDate();
+        };
+        let todayCount = 0;
 
-        products.forEach(p => {
+        products.forEach(rawProduct => {
+            const p = this.standardizeProduct(rawProduct);
             const cat = p.category || 'Uncategorized';
-            categories[cat] = (categories[cat] || 0) + 1;
+            const subcat = p.subcategory || 'General';
+            categories[cat] = categories[cat] || {};
+            categories[cat][subcat] = (categories[cat][subcat] || 0) + 1;
             if (p.price && p.price.selling_price) {
                 totalValue += (parseFloat(p.price.selling_price) || 0);
             }
+            const brand = p.brand && p.brand.display ? p.brand.display : p.brand;
+            if (brand && String(brand).trim()) brands.add(String(brand).trim().toLowerCase());
+            const imageGroups = p.images && typeof p.images === 'object' ? Object.values(p.images) : [];
+            totalImages += imageGroups.reduce((sum, group) => sum + (Array.isArray(group) ? group.filter(Boolean).length : 0), 0);
+            if (isToday(p.created_at) || isToday(p.updated_at)) todayCount++;
+        });
+
+        const recentProducts = [...products].sort((left, right) => {
+            const leftTime = new Date(left.updated_at || left.created_at || 0).getTime() || 0;
+            const rightTime = new Date(right.updated_at || right.created_at || 0).getTime() || 0;
+            return rightTime - leftTime;
         });
 
         return {
             totalProducts: products.length,
             categories: categories,
+            totalImages,
+            totalBrands: brands.size,
+            todayCount,
             totalInventoryValue: totalValue,
-            recentProducts: products.slice(-5).reverse()
+            recentProducts: recentProducts.slice(0, 6),
+            lastEditedProduct: recentProducts[0] || null
         };
     }
 
-    saveProduct(p) {
+    saveProduct(p, isEdit = false, originalSku = null) {
         const data = this.getData();
-        let newProduct = { ...p };
+        const lookupSku = isEdit && originalSku ? originalSku : p.sku;
+        const existingIndex = data.products.findIndex(x => x.sku === lookupSku);
+        const existing = existingIndex >= 0 ? data.products[existingIndex] : {};
+        const now = new Date().toISOString();
+        const brandDisplay = p.brand && typeof p.brand === 'object' ? p.brand.display : p.brand;
+        const legacyPrice = p.price && typeof p.price === 'object'
+            ? p.price
+            : {
+                mrp: Number(p.mrp) || 0,
+                selling_price: Number(p.price) || 0,
+                discount_percent: Number(p.discount_percent) || 0
+            };
+        const legacyAdditionalInfo = p.additional_info && typeof p.additional_info === 'object'
+            ? p.additional_info
+            : {
+                material: p.material || '',
+                weight: p.weight || '',
+                country_of_origin: p.country_of_origin || ''
+            };
+        const legacyImages = p.images && typeof p.images === 'object'
+            ? p.images
+            : { amazon: Array.isArray(p.amazon_images) ? p.amazon_images : [] };
 
-        if (p.sku) {
-            let index = data.products.findIndex(x => x.sku === p.sku);
+        let newProduct = {
+            ...existing,
+            ...p,
+            product_serial_id: Number(p.product_serial_id) || Number(existing.product_serial_id) || this.getNewSerialId(),
+            sku: p.sku,
+            category: p.category || '',
+            subcategory: p.subcategory || '',
+            name: p.name || '',
+            brand: {
+                display: String(brandDisplay || '').trim(),
+                normalized: String(brandDisplay || '').trim().toLowerCase()
+            },
+            status: p.status || 'Draft',
+            completeness_score: Number(p.completeness_score) || 0,
+            price: legacyPrice,
+            pricing_basis: p.pricing_basis && typeof p.pricing_basis === 'object' ? p.pricing_basis : null,
+            size_options: Array.isArray(p.size_options) ? p.size_options : [],
+            sale_variants: Array.isArray(p.sale_variants) ? p.sale_variants : [],
+            stock_quantity: Number(p.stock_quantity) || 0,
+            short_description: p.short_description || '',
+            features: Array.isArray(p.features) ? p.features : [],
+            specifications: Array.isArray(p.specifications) ? p.specifications : [],
+            additional_info: legacyAdditionalInfo,
+            warranty_period: p.warranty_period || '',
+            warranty_type: p.warranty_type || '',
+            box_items: Array.isArray(p.box_items) ? p.box_items : [],
+            images: legacyImages,
+            amazon_url: p.amazon_url || '',
+            created_at: existing.created_at || now,
+            updated_at: now
+        };
+
+        // Flat form helpers are intentionally removed so every saved product keeps
+        // the same legacy website-ready structure as the existing catalog.
+        ['mrp', 'discount_percent', 'material', 'weight', 'country_of_origin', 'amazon_images']
+            .forEach(key => delete newProduct[key]);
+        newProduct = this.standardizeProduct(newProduct);
+
+        if (newProduct.sku) {
+            let index = existingIndex >= 0
+                ? existingIndex
+                : data.products.findIndex(x => x.sku === newProduct.sku);
             if (index === -1) {
-                newProduct.created_at = new Date().toISOString();
                 data.products.push(newProduct);
             } else {
-                newProduct.created_at = data.products[index].created_at || new Date().toISOString();
                 data.products[index] = newProduct;
             }
         } else {
             newProduct.sku = "BM-PT-" + Date.now();
-            newProduct.created_at = new Date().toISOString();
             data.products.push(newProduct);
         }
 
+        data.metadata = data.metadata || {};
+        data.metadata.last_serial_id = Math.max(
+            Number(data.metadata.last_serial_id) || 1000000,
+            Number(newProduct.product_serial_id) || 0
+        );
         this.saveData(data);
         return newProduct;
     }

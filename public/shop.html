@@ -12,13 +12,13 @@
     <script src="db.js?v=2026.07.10.CATALOG28"></script>
     <style>
         :root {
-            --primary: #E85D04;       /* BuildMart Safety Orange */
-            --primary-dark: #C74D04;  /* Deep Orange Hover */
-            --secondary: #1E2024;     /* BuildMart Charcoal Slate */
-            --accent: #FF8533;        /* Bright Orange Accent */
+            --primary: #f6b800;
+            --primary-dark: #d89f00;
+            --secondary: #121820;
+            --accent: #ffd65a;
             --success: #10b981;
             --danger: #ef4444;
-            --bg: #F8F9FA;            /* Clean Off-White Background */
+            --bg: #f3f3f3;
             --card-bg: #ffffff;
             --text-main: #212529;     /* Deep Charcoal Text */
             --text-muted: #6C757D;    /* Warm Slate Muted */
@@ -686,6 +686,23 @@
         .modal-info h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; color: var(--text-main); }
         .modal-info .meta-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }
         .modal-price-box { background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .variant-picker {
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .variant-picker label { display: block; margin-bottom: 6px; color: #334155; font-size: 13px; font-weight: 700; }
+        .variant-picker select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #fff;
+            color: #0f172a;
+            font-weight: 650;
+        }
+        .variant-picker select:focus { outline: 3px solid rgba(232,93,4,.18); border-color: var(--primary); }
+        .pack-count-note { margin-top: 5px; color: #64748b; font-size: 12px; font-weight: 600; }
         
         .feature-list { list-style: none; padding: 0; margin: 16px 0; }
         .feature-list li { padding: 6px 0; display: flex; align-items: flex-start; gap: 8px; font-size: 14px; color: #334155; border-bottom: 1px solid #f1f5f9; }
@@ -704,18 +721,116 @@
             margin-top: auto;
         }
         footer p { color: #94a3b8; font-size: 14px; }
+
+        /* CUSTOMER STOREFRONT — logo-led black and gold */
+        .motivation-hub { display: none; }
+        .top-banner {
+            background: #0b0d10;
+            border-bottom-color: var(--primary);
+            color: #f6f7f8;
+            font-size: .75rem;
+        }
+        .navbar {
+            background: var(--secondary);
+            border-bottom: 0;
+            padding: 10px clamp(16px, 3vw, 42px);
+        }
+        .store-logo { width: 92px; height: 58px; object-fit: contain; background: #fff; border-radius: 4px; }
+        .search-container { max-width: 760px; }
+        .search-input {
+            border: 3px solid transparent;
+            border-radius: 7px;
+            background: #fff;
+            padding: 11px 16px 11px 44px;
+        }
+        .search-input:focus { border-color: var(--primary); box-shadow: none; }
+        .nav-actions .btn-outline { background: transparent; border-color: #59636f; color: #fff; }
+        .nav-actions .btn-outline:hover { background: #25303b; border-color: #7f8a96; }
+        .btn-primary { background: var(--primary); color: #171717; box-shadow: none; }
+        .btn-primary:hover { background: var(--accent); }
+        .hero {
+            min-height: 235px;
+            padding: 42px clamp(20px, 6vw, 90px) 52px;
+            text-align: left;
+            background:
+                radial-gradient(circle at 78% 30%, rgba(246,184,0,.22), transparent 30%),
+                linear-gradient(110deg, #151b23, #252f3b);
+            border-bottom: 4px solid var(--primary);
+        }
+        .hero h1 { max-width: 760px; margin-bottom: 8px; font-size: clamp(2rem, 4vw, 3.25rem); letter-spacing: -.045em; -webkit-text-fill-color: #fff; }
+        .hero p { max-width: 680px; margin: 0 0 22px; color: #d0d5da; font-size: 1rem; }
+        .stats-row { justify-content: flex-start; gap: 34px; margin-top: 20px; padding-top: 16px; }
+        .stat-item h3 { color: var(--primary); font-variant-numeric: tabular-nums; }
+        .store-container { max-width: 1500px; padding: 24px clamp(14px, 2.5vw, 36px) 48px; }
+        .controls-bar {
+            display: block;
+            margin-bottom: 14px;
+            padding: 14px 16px;
+            border: 0;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(15,23,42,.12);
+        }
+        .category-pills { gap: 4px; }
+        .pill { border-radius: 4px; padding: 8px 13px; background: transparent; color: #303942; }
+        .pill:hover { background: #f2f2f2; }
+        .pill.active { background: var(--secondary); color: #fff; box-shadow: inset 0 -3px var(--primary); }
+        .catalog-layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 18px; align-items: start; }
+        .filter-sidebar {
+            position: sticky;
+            top: 84px;
+            padding: 18px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .filter-sidebar h2 { margin-bottom: 15px; font-size: 1.05rem; }
+        .filter-group { margin-bottom: 16px; }
+        .filter-group label { display: block; margin-bottom: 6px; color: #333; font-size: .75rem; font-weight: 700; }
+        .filter-sidebar .select-input { width: 100%; border-radius: 4px; padding: 9px 10px; }
+        .clear-filters { width: 100%; justify-content: center; border: 1px solid #aab1b8; background: #fff; color: #222; }
+        .catalog-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 12px; }
+        .catalog-heading h2 { font-size: 1.25rem; }
+        .result-count { color: var(--text-muted); font-size: .82rem; font-weight: 600; }
+        .product-grid { grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)); gap: 14px; }
+        .product-card { border-radius: 4px; box-shadow: none; }
+        .product-card:hover { transform: translateY(-2px); border-color: #b8b8b8; box-shadow: 0 5px 16px rgba(18,24,32,.12); }
+        footer { padding: 34px clamp(20px, 5vw, 72px); text-align: left; background: #111820; border-top: 5px solid var(--primary); }
+        .footer-inner { max-width: 1400px; margin: auto; display: grid; grid-template-columns: auto minmax(240px, 1fr) auto; gap: 24px; align-items: center; }
+        .footer-logo { width: 82px; height: 64px; object-fit: contain; background: #fff; border-radius: 4px; }
+        .footer-note { margin: 0 0 5px; color: #fff; font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 650; }
+        .footer-meta { color: #9da7b2; font-size: .76rem; }
+        .footer-links { display: flex; flex-wrap: wrap; gap: 14px; }
+        .footer-links a { color: #e2e6ea; font-size: .8rem; text-decoration: none; }
+        .footer-links a:hover { color: var(--primary); }
+        @media (max-width: 850px) {
+            .catalog-layout { grid-template-columns: 1fr; }
+            .filter-sidebar { position: static; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+            .filter-sidebar h2, .filter-sidebar .clear-filters { grid-column: 1 / -1; }
+            .filter-group { margin: 0; }
+            .footer-inner { grid-template-columns: auto 1fr; }
+            .footer-links { grid-column: 1 / -1; }
+        }
+        @media (max-width: 560px) {
+            .nav-actions .btn-outline { display: none; }
+            .store-logo { width: 66px; height: 46px; }
+            .hero { padding-top: 32px; }
+            .filter-sidebar { grid-template-columns: 1fr; }
+            .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+        }
     
         /* SLEEK RELOAD / LOADING SCREEN WITH WATERMARK */
         .loader-overlay {
             position: fixed;
             inset: 0;
             z-index: 999999;
-            background: linear-gradient(135deg, #1E2024 0%, #15171a 100%);
+            background:
+                radial-gradient(circle at 50% 42%, rgba(246,184,0,.14), transparent 28%),
+                linear-gradient(145deg, #171d25 0%, #090b0e 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: opacity 240ms cubic-bezier(.23,1,.32,1), visibility 240ms cubic-bezier(.23,1,.32,1);
             color: white;
         }
 
@@ -725,22 +840,55 @@
             pointer-events: none;
         }
 
-        .loader-logo-img {
-            height: 110px;
-            width: auto;
-            object-fit: contain;
-            filter: drop-shadow(0 12px 30px rgba(232, 93, 4, 0.6));
-            border-radius: 18px;
-            background: white;
-            padding: 12px 20px;
-            margin-bottom: 24px;
-            animation: pulse-logo 1.5s infinite ease-in-out;
+        .loader-mark {
+            position: relative;
+            display: grid;
+            width: 168px;
+            height: 144px;
+            place-items: center;
+            margin-bottom: 20px;
         }
-
-        @keyframes pulse-logo {
-            0%, 100% { transform: scale(1); filter: drop-shadow(0 12px 30px rgba(232, 93, 4, 0.6)); }
-            50% { transform: scale(1.06); filter: drop-shadow(0 18px 40px rgba(232, 93, 4, 0.8)); }
+        .loader-mark::before,
+        .loader-mark::after {
+            content: '';
+            position: absolute;
+            inset: 5px 17px;
+            border: 1px solid rgba(246,184,0,.25);
+            opacity: 0;
+            transform: rotate(35deg) scale(.68);
         }
+        .loader-mark::after { inset: 17px 29px; border-color: rgba(255,255,255,.13); }
+        .loader-overlay.is-running .loader-mark::before { animation: loader-ring 900ms 80ms cubic-bezier(.23,1,.32,1) forwards; }
+        .loader-overlay.is-running .loader-mark::after { animation: loader-ring 900ms 160ms cubic-bezier(.23,1,.32,1) forwards; }
+        .loader-logo-frame {
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            width: 132px;
+            height: 116px;
+            padding: 9px 13px;
+            border: 1px solid rgba(246,184,0,.55);
+            border-radius: 8px;
+            background: #fff;
+            opacity: 0;
+            transform: translateY(10px) scale(.94) rotate(-2deg);
+            box-shadow: 0 18px 55px rgba(0,0,0,.42);
+        }
+        .loader-overlay.is-running .loader-logo-frame { animation: logo-arrive 720ms cubic-bezier(.23,1,.32,1) forwards; }
+        .loader-logo-img { width: 100%; height: 100%; object-fit: contain; border-radius: 3px; }
+        .loader-logo-scan {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(105deg, transparent 34%, rgba(255,214,90,.75) 49%, transparent 64%);
+            transform: translateX(-120%);
+        }
+        .loader-overlay.is-running .loader-logo-scan { animation: logo-scan 700ms 310ms cubic-bezier(.77,0,.175,1) forwards; }
+        @keyframes logo-arrive { to { opacity: 1; transform: translateY(0) scale(1) rotate(0); } }
+        @keyframes loader-ring {
+            45% { opacity: .8; }
+            100% { opacity: .28; transform: rotate(45deg) scale(1); }
+        }
+        @keyframes logo-scan { to { transform: translateX(120%); } }
 
         .loader-title {
             font-family: 'Outfit', sans-serif;
@@ -749,7 +897,10 @@
             letter-spacing: 1px;
             margin-bottom: 8px;
             color: #ffffff;
+            opacity: 0;
+            transform: translateY(8px);
         }
+        .loader-overlay.is-running .loader-title { animation: loader-copy-in 420ms 210ms cubic-bezier(.23,1,.32,1) forwards; }
 
         .loader-title span {
             color: var(--primary);
@@ -762,7 +913,10 @@
             text-transform: uppercase;
             margin-bottom: 40px;
             font-weight: 600;
+            opacity: 0;
+            transform: translateY(6px);
         }
+        .loader-overlay.is-running .loader-subtitle { animation: loader-copy-in 420ms 280ms cubic-bezier(.23,1,.32,1) forwards; }
 
         .loader-progress-container {
             width: 260px;
@@ -775,19 +929,27 @@
         }
 
         .loader-progress-bar {
-            width: 0%;
+            width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, #FF8533, #E85D04);
+            background: linear-gradient(90deg, #f6b800, #ffd65a);
             border-radius: 99px;
-            transition: width 0.3s ease;
-            animation: load-progress 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+            transform: scaleX(0);
+            transform-origin: left center;
         }
+        .loader-overlay.is-running .loader-progress-bar { animation: load-progress 1.2s cubic-bezier(.23,1,.32,1) forwards; }
 
-        @keyframes load-progress {
-            0% { width: 0%; }
-            40% { width: 60%; }
-            80% { width: 85%; }
-            100% { width: 100%; }
+        @keyframes load-progress { to { transform: scaleX(1); } }
+        @keyframes loader-copy-in { to { opacity: 1; transform: translateY(0); } }
+        @media (prefers-reduced-motion: reduce) {
+            .loader-mark::before, .loader-mark::after, .loader-logo-scan { display: none; }
+            .loader-overlay.is-running .loader-logo-frame,
+            .loader-overlay.is-running .loader-title,
+            .loader-overlay.is-running .loader-subtitle {
+                animation: loader-fade 180ms ease-out forwards;
+                transform: none;
+            }
+            .loader-overlay.is-running .loader-progress-bar { animation: load-progress 180ms ease-out forwards; }
+            @keyframes loader-fade { to { opacity: 1; } }
         }
 
         .loader-watermark {
@@ -1171,8 +1333,13 @@
 </head>
 <body>
     <!-- RELOAD LOADING SCREEN WITH WATERMARK -->
-    <div id="buildmart-loader" class="loader-overlay">
-        <img src="LOGO.jpg" alt="Build Mart Logo" class="loader-logo-img" onerror="this.style.display='none'">
+    <div id="buildmart-loader" class="loader-overlay is-running" role="status" aria-label="Loading Build Mart store">
+        <div class="loader-mark" aria-hidden="true">
+            <div class="loader-logo-frame">
+                <img src="logo.png" alt="" class="loader-logo-img" onerror="this.style.display='none'">
+                <span class="loader-logo-scan"></span>
+            </div>
+        </div>
         <h1 class="loader-title">BUILD <span>MART</span></h1>
         <p class="loader-subtitle">TOOLS • HARDWARE • MORE</p>
         <div class="loader-progress-container">
@@ -1185,13 +1352,13 @@
 
     <!-- TOP BANNER -->
     <div class="top-banner">
-        🚀 LIVE STOREFRONT PREVIEW — REAL-TIME CATALOG SYNCHRONIZED WITH YOUR LOCAL DATABASE
+        BUILD MART · VERIFIED HARDWARE CATALOG · INDIA
     </div>
 
     <!-- NAVBAR -->
     <nav class="navbar">
         <a href="#" class="logo" onclick="triggerReloadScreen(1000); return false;" style="display:flex; align-items:center; gap:12px; text-decoration:none;">
-            <img src="LOGO.jpg" alt="Build Mart Logo" style="height: 48px; width: auto; object-fit: contain;">
+            <img src="logo.png" alt="Build Mart home" class="store-logo">
         </a>
 
         <div class="search-container">
@@ -1208,8 +1375,8 @@
 
     <!-- HERO SECTION -->
     <section class="hero">
-        <h1>Professional Grade Hardware & Power Tools</h1>
-        <p>Browse your complete collected product inventory in a realistic e-commerce storefront layout. Test product images, pricing accuracy, and Amazon affiliate links.</p>
+        <h1>Hardware that earns its place in your toolbox.</h1>
+        <p>Compare verified tools, fasteners, accessories, and pack prices from one focused catalog.</p>
         
         <div class="stats-row">
             <div class="stat-item">
@@ -1263,31 +1430,44 @@
         
         <!-- CONTROLS & FILTERS -->
         <div class="controls-bar">
-            <div class="category-pills" id="categoryPills">
-                <div class="pill active" onclick="setCategory('All')">All Products</div>
-                <div class="pill" onclick="setCategory('Power Tools')">Power Tools</div>
-                <div class="pill" onclick="setCategory('Hand Tools')">Hand Tools</div>
-                <div class="pill" onclick="setCategory('Tools & Accessories')">Accessories</div>
-                <div class="pill" onclick="setCategory('Adhesives & Consumables')">Consumables</div>
-            </div>
-
-            <div class="filter-dropdowns">
-                <select id="brandFilter" class="select-input" onchange="filterProducts()">
-                    <option value="">All Brands</option>
-                </select>
-
-                <select id="sortFilter" class="select-input" onchange="filterProducts()">
-                    <option value="newest">Sort by: Newest</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="discount">Biggest Discount</option>
-                </select>
-            </div>
+            <div class="category-pills" id="categoryPills"></div>
         </div>
 
-        <!-- PRODUCT GRID -->
-        <div class="product-grid" id="productGrid">
-            <!-- Dynamically populated -->
+        <div class="catalog-layout">
+            <aside class="filter-sidebar" aria-label="Catalog filters">
+                <h2>Filter products</h2>
+                <div class="filter-group">
+                    <label for="subcategoryFilter">Subcategory</label>
+                    <select id="subcategoryFilter" class="select-input" onchange="filterProducts()"><option value="">All subcategories</option></select>
+                </div>
+                <div class="filter-group">
+                    <label for="brandFilter">Brand</label>
+                    <select id="brandFilter" class="select-input" onchange="filterProducts()"><option value="">All brands</option></select>
+                </div>
+                <div class="filter-group">
+                    <label for="priceFilter">Price</label>
+                    <select id="priceFilter" class="select-input" onchange="filterProducts()">
+                        <option value="">Any price</option><option value="under-500">Under ₹500</option><option value="500-1500">₹500–₹1,500</option><option value="1500-5000">₹1,500–₹5,000</option><option value="5000-plus">₹5,000 and above</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="stockFilter">Availability</label>
+                    <select id="stockFilter" class="select-input" onchange="filterProducts()">
+                        <option value="">All availability</option><option value="in-stock">In stock</option><option value="low-stock">Only a few left</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="sortFilter">Sort results</label>
+                    <select id="sortFilter" class="select-input" onchange="filterProducts()">
+                        <option value="newest">Newest</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="discount">Biggest discount</option>
+                    </select>
+                </div>
+                <button type="button" class="btn clear-filters" onclick="clearStoreFilters()"><i class="bi bi-arrow-counterclockwise"></i> Clear filters</button>
+            </aside>
+            <section class="catalog-results" aria-labelledby="catalogTitle">
+                <div class="catalog-heading"><h2 id="catalogTitle">All products</h2><span class="result-count" id="productResultCount">0 products</span></div>
+                <div class="product-grid" id="productGrid"></div>
+            </section>
         </div>
 
     </main>
@@ -1303,7 +1483,7 @@
                 <div class="gallery-wrapper">
                     <div class="gallery-thumbs" id="mv_thumbs_strip"></div>
                     <div class="modal-img-container" id="mv_zoom_box" onmousemove="handleZoomMove(event)" onmouseleave="handleZoomLeave()">
-                        <img src="" alt="Product" class="modal-img" id="mv_img" onerror="this.src='LOGO.jpg'">
+                        <img src="" alt="Product" class="modal-img" id="mv_img" onerror="this.src='logo.png'">
                         <div class="zoom-hint-badge"><i class="bi bi-zoom-in"></i> Hover to Zoom Like Amazon</div>
                     </div>
                 </div>
@@ -1322,12 +1502,22 @@
                     </div>
                     
                     <div class="modal-price-box">
+                        <div id="mv_variant_section" class="variant-picker" hidden>
+                            <div id="mv_size_picker" style="margin-bottom:10px;">
+                                <label for="mv_size_select">Choose size</label>
+                                <select id="mv_size_select" onchange="selectQuickViewSize(this.value)"></select>
+                            </div>
+                            <label for="mv_variant_select">Choose pack size or weight</label>
+                            <select id="mv_variant_select" onchange="selectQuickViewVariant(this.value)"></select>
+                            <div id="mv_variant_basis" class="pack-count-note"></div>
+                        </div>
                         <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">Special Store Price:</div>
                         <div style="display:flex; align-items:baseline; gap:12px;">
                             <span class="price-main" style="font-size:28px;" id="mv_price">₹0</span>
                             <span class="price-mrp" style="font-size:16px;" id="mv_mrp">₹0</span>
                             <span style="background:var(--danger); color:white; font-size:12px; font-weight:700; padding:2px 8px; border-radius:4px;" id="mv_discount">0% OFF</span>
                         </div>
+                        <div id="mv_unit_price" class="pack-count-note"></div>
                     </div>
 
                     <p style="font-size:14px; color:var(--text-muted); line-height:1.6;" id="mv_desc">No description available.</p>
@@ -1346,12 +1536,22 @@
 
     <!-- FOOTER -->
     <footer>
-        <p>&copy; 2026 BUILD MART STOREFRONT PREVIEW. All rights reserved. Powered by PW-G06.</p>
+        <div class="footer-inner">
+            <img src="logo.png" alt="Build Mart" class="footer-logo">
+            <div>
+                <p class="footer-note">Our range may be focused, but every item is chosen for dependable quality.</p>
+                <div class="footer-meta">&copy; 2026 Build Mart. Practical hardware, clearly presented.</div>
+            </div>
+            <nav class="footer-links" aria-label="Footer"><a href="shop.html">Store</a><a href="index.html">Dashboard</a><a href="add-product.html">Add product</a><a href="review.html">Dataset review</a></nav>
+        </div>
     </footer>
 
     <script>
         var allProducts = [];
         var currentCategory = 'All';
+        var currentSubcategory = '';
+        var currentQuickViewProduct = null;
+        var currentQuickViewVariant = null;
 
         
         function updateMotivationHub(totalProducts) {
@@ -1402,9 +1602,145 @@
             if (motivationTip) motivationTip.innerHTML = `<i class="bi bi-lightning-charge-fill"></i> <span><strong>Growth Tip:</strong> ${tip}</span>`;
         }
 
-        function orderViaWhatsApp(sku, title, price) {
-            const msg = encodeURIComponent(`Hello BuildMart! I am interested in ordering: \n\n🛠️ Tool: ${title}\n🏷️ SKU: ${sku}\n💰 Price: ₹${price}\n\nPlease confirm stock availability and shipping details!`);
+        function orderViaWhatsApp(sku, title, price, packLabel) {
+            const packLine = packLabel ? `\n📦 Pack: ${packLabel}` : '';
+            const msg = encodeURIComponent(`Hello BuildMart! I am interested in ordering: \n\n🛠️ Product: ${title}\n🏷️ SKU: ${sku}${packLine}\n💰 Price: ₹${price}\n\nPlease confirm stock availability and shipping details.`);
             window.open(`https://wa.me/919876543210?text=${msg}`, '_blank');
+        }
+
+        function renderQuickViewActions(product, variant) {
+            var actWrap = document.getElementById('mv_action_wrap');
+            if (variant) {
+                var amazonLink = product.amazon_url
+                    ? '<a href="' + product.amazon_url + '" target="_blank" class="btn-amazon" style="width:100%; padding:12px; margin-top:8px;"><i class="bi bi-amazon me-2"></i> View source listing</a>'
+                    : '';
+                actWrap.innerHTML =
+                    '<button type="button" class="btn-whatsapp" style="width:100%; padding:14px; font-size:16px;" onclick="orderCurrentVariantViaWhatsApp()">' +
+                    '<i class="bi bi-whatsapp me-2"></i> Order selected pack</button>' + amazonLink;
+            } else if (product.amazon_url) {
+                actWrap.innerHTML = '<a href="' + product.amazon_url + '" target="_blank" class="btn-amazon" style="width:100%; padding:14px; font-size:16px;"><i class="bi bi-amazon me-2"></i> Buy / View on Amazon India</a>';
+            } else {
+                actWrap.innerHTML = '<a href="add-product.html?edit=' + (product.sku || '') + '" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;"><i class="bi bi-pencil me-2"></i> Edit Product Details</a>';
+            }
+        }
+
+        function renderSaleVariantSelector(product) {
+            var section = document.getElementById('mv_variant_section');
+            var sizeSelect = document.getElementById('mv_size_select');
+            var variants = Array.isArray(product.sale_variants)
+                ? product.sale_variants.filter(function(variant) { return Number(variant.quantity) > 0 && Number(variant.price) > 0; })
+                : [];
+            section.hidden = variants.length === 0;
+            currentQuickViewVariant = null;
+            if (!variants.length) {
+                document.getElementById('mv_unit_price').textContent = '';
+                renderQuickViewActions(product, null);
+                return;
+            }
+            var sizes = Array.isArray(product.size_options) ? product.size_options.slice() : [];
+            if (!sizes.length) {
+                var seenSizes = new Set();
+                variants.forEach(function(variant) {
+                    var id = variant.size_id || 'standard-size';
+                    if (!seenSizes.has(id)) {
+                        seenSizes.add(id);
+                        sizes.push({ id: id, label: variant.size_label || 'Standard size', is_default: sizes.length === 0 });
+                    }
+                });
+            }
+            if (variants.some(function(variant) { return variant.is_combo; }) &&
+                !sizes.some(function(size) { return size.id === 'combo-all'; })) {
+                sizes.push({ id: 'combo-all', label: 'Mixed-size box', is_combo: true, is_default: false });
+            }
+            sizeSelect.innerHTML = '';
+            sizes.forEach(function(size) {
+                var option = document.createElement('option');
+                option.value = size.id;
+                option.textContent = size.label || ((size.value || '') + ' ' + (size.unit || '')).trim();
+                if (size.is_default) option.selected = true;
+                sizeSelect.appendChild(option);
+            });
+            sizeSelect.dataset.variants = JSON.stringify(variants);
+            sizeSelect.dataset.sizes = JSON.stringify(sizes);
+            var defaultCombo = variants.find(function(variant) { return variant.is_combo && variant.is_default; });
+            var defaultSize = defaultCombo
+                ? sizes.find(function(size) { return size.id === 'combo-all'; })
+                : sizes.find(function(size) { return size.is_default; });
+            defaultSize = defaultSize || sizes[0];
+            sizeSelect.value = defaultSize.id;
+            document.getElementById('mv_size_picker').hidden = sizes.length < 2;
+            selectQuickViewSize(defaultSize.id);
+        }
+
+        function selectQuickViewSize(sizeId) {
+            var sizeSelect = document.getElementById('mv_size_select');
+            var packSelect = document.getElementById('mv_variant_select');
+            var variants = [];
+            var sizes = [];
+            try { variants = JSON.parse(sizeSelect.dataset.variants || '[]'); } catch (_) {}
+            try { sizes = JSON.parse(sizeSelect.dataset.sizes || '[]'); } catch (_) {}
+            var selectedSize = sizes.find(function(size) { return size.id === sizeId; });
+            var sizeImages = selectedSize && Array.isArray(selectedSize.images) ? selectedSize.images.filter(Boolean) : [];
+            renderQuickViewGallery(sizeImages.length ? sizeImages : getProductGalleryImages(currentQuickViewProduct));
+            var filtered = variants.filter(function(variant) {
+                return (variant.size_id || 'standard-size') === sizeId;
+            });
+            if (!filtered.length) filtered = variants;
+            packSelect.innerHTML = '';
+            filtered.forEach(function(variant, index) {
+                var option = document.createElement('option');
+                option.value = String(index);
+                var packLabel = variant.is_combo
+                    ? variant.quantity + ' pcs assorted box'
+                    : variant.quantity + ' ' + (variant.unit === 'pcs' ? 'pcs' : variant.unit);
+                option.textContent = packLabel + ' — ₹' + Number(variant.price).toLocaleString('en-IN');
+                if (variant.is_default) option.selected = true;
+                packSelect.appendChild(option);
+            });
+            var selectedIndex = filtered.findIndex(function(variant) { return variant.is_default; });
+            if (selectedIndex < 0) selectedIndex = 0;
+            packSelect.value = String(selectedIndex);
+            packSelect.dataset.variants = JSON.stringify(filtered);
+            var basis = currentQuickViewProduct && currentQuickViewProduct.pricing_basis;
+            document.getElementById('mv_variant_basis').textContent = selectedSize && selectedSize.is_combo
+                ? filtered.length + ' mixed-size box option · ' + (filtered[0]?.included_size_labels || 'contains all listed sizes')
+                : (basis && basis.quantity
+                    ? filtered.length + ' buying options for this size · based on ' + basis.quantity + ' ' + basis.unit
+                    : filtered.length + ' buying options for this size');
+            selectQuickViewVariant(selectedIndex);
+        }
+
+        function selectQuickViewVariant(index) {
+            var select = document.getElementById('mv_variant_select');
+            var variants = [];
+            try { variants = JSON.parse(select.dataset.variants || '[]'); } catch (_) {}
+            var variant = variants[Number(index)] || variants[0];
+            if (!variant || !currentQuickViewProduct) return;
+            currentQuickViewVariant = variant;
+            var sellPrice = Number(variant.price) || 0;
+            var mrp = Number(variant.mrp) || 0;
+            var disc = mrp > sellPrice ? Math.round(((mrp - sellPrice) / mrp) * 100) : 0;
+            document.getElementById('mv_price').innerText = '₹' + sellPrice.toLocaleString('en-IN');
+            document.getElementById('mv_mrp').innerText = mrp > sellPrice ? ('₹' + mrp.toLocaleString('en-IN')) : '';
+            document.getElementById('mv_discount').innerText = disc > 0 ? (disc + '% OFF') : '';
+            document.getElementById('mv_discount').style.display = disc > 0 ? 'inline-block' : 'none';
+            var perCount = variant.unit === 'pcs' && Number(variant.quantity) > 0
+                ? sellPrice / Number(variant.quantity)
+                : 0;
+            document.getElementById('mv_unit_price').textContent = perCount > 0
+                ? '₹' + perCount.toFixed(2) + ' per count (₹' + perCount.toFixed(2) + ' / count)'
+                : '';
+            renderQuickViewActions(currentQuickViewProduct, variant);
+        }
+
+        function orderCurrentVariantViaWhatsApp() {
+            if (!currentQuickViewProduct || !currentQuickViewVariant) return;
+            orderViaWhatsApp(
+                currentQuickViewProduct.sku || '',
+                currentQuickViewProduct.name || 'Hardware product',
+                currentQuickViewVariant.price,
+                currentQuickViewVariant.label || (currentQuickViewVariant.quantity + ' ' + currentQuickViewVariant.unit)
+            );
         }
 
         function initStore() {
@@ -1431,19 +1767,72 @@
                 brandSelect.appendChild(opt);
             });
 
+            renderCategoryFilters();
+            updateSubcategoryFilter();
             filterProducts();
+        }
+
+        function renderCategoryFilters() {
+            var wrap = document.getElementById('categoryPills');
+            var categories = Array.from(new Set(allProducts.map(function(p) { return p.category; }).filter(Boolean))).sort();
+            wrap.innerHTML = '';
+            ['All'].concat(categories).forEach(function(category) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'pill' + (category === currentCategory ? ' active' : '');
+                button.dataset.category = category;
+                button.textContent = category === 'All' ? 'All products' : category;
+                button.addEventListener('click', function() { setCategory(category); });
+                wrap.appendChild(button);
+            });
+        }
+
+        function updateSubcategoryFilter() {
+            var select = document.getElementById('subcategoryFilter');
+            var subcategories = Array.from(new Set(allProducts
+                .filter(function(p) { return currentCategory === 'All' || p.category === currentCategory; })
+                .map(function(p) { return p.subcategory; })
+                .filter(Boolean))).sort();
+            if (subcategories.indexOf(currentSubcategory) === -1) currentSubcategory = '';
+            select.innerHTML = '<option value="">All subcategories</option>';
+            subcategories.forEach(function(subcategory) {
+                var option = document.createElement('option');
+                option.value = subcategory;
+                option.textContent = subcategory;
+                select.appendChild(option);
+            });
+            select.value = currentSubcategory;
         }
 
         function setCategory(cat) {
             currentCategory = cat;
+            currentSubcategory = '';
             var pills = document.querySelectorAll('.pill');
             pills.forEach(function(p) {
-                if (p.textContent.trim() === cat || (cat === 'All' && p.textContent.trim() === 'All Products')) {
-                    p.classList.add('active');
-                } else {
-                    p.classList.remove('active');
-                }
+                p.classList.toggle('active', p.dataset.category === cat);
             });
+            updateSubcategoryFilter();
+            filterProducts();
+        }
+
+        function getStoreProductPrice(product) {
+            var variants = Array.isArray(product.sale_variants)
+                ? product.sale_variants.filter(function(variant) { return Number(variant.price) > 0; })
+                : [];
+            var defaultVariant = variants.find(function(variant) { return variant.is_default; }) || variants[0];
+            return defaultVariant
+                ? Number(defaultVariant.price) || 0
+                : Number(product.price && product.price.selling_price !== undefined ? product.price.selling_price : product.price) || 0;
+        }
+
+        function clearStoreFilters() {
+            currentCategory = 'All';
+            currentSubcategory = '';
+            document.getElementById('searchInput').value = '';
+            ['brandFilter', 'priceFilter', 'stockFilter'].forEach(function(id) { document.getElementById(id).value = ''; });
+            document.getElementById('sortFilter').value = 'newest';
+            renderCategoryFilters();
+            updateSubcategoryFilter();
             filterProducts();
         }
 
@@ -1451,18 +1840,29 @@
             var q = document.getElementById('searchInput').value.toLowerCase();
             var brand = document.getElementById('brandFilter').value;
             var sort = document.getElementById('sortFilter').value;
+            var subcategory = document.getElementById('subcategoryFilter').value;
+            var priceRange = document.getElementById('priceFilter').value;
+            var stock = document.getElementById('stockFilter').value;
+            currentSubcategory = subcategory;
 
             var filtered = allProducts.filter(function(p) {
                 var matchCat = (currentCategory === 'All') || (p.category === currentCategory);
-                
+                var matchSubcategory = !subcategory || p.subcategory === subcategory;
                 var pBrand = ((p.brand && p.brand.display) ? p.brand.display : (p.brand || '')).toLowerCase();
                 var matchBrand = !brand || (pBrand === brand);
-
                 var name = (p.name || '').toLowerCase();
                 var sku = (p.sku || '').toLowerCase();
-                var matchQ = !q || name.includes(q) || sku.includes(q) || pBrand.includes(q);
-
-                return matchCat && matchBrand && matchQ;
+                var categoryText = ((p.category || '') + ' ' + (p.subcategory || '')).toLowerCase();
+                var matchQ = !q || name.includes(q) || sku.includes(q) || pBrand.includes(q) || categoryText.includes(q);
+                var productPrice = getStoreProductPrice(p);
+                var matchPrice = !priceRange ||
+                    (priceRange === 'under-500' && productPrice < 500) ||
+                    (priceRange === '500-1500' && productPrice >= 500 && productPrice < 1500) ||
+                    (priceRange === '1500-5000' && productPrice >= 1500 && productPrice < 5000) ||
+                    (priceRange === '5000-plus' && productPrice >= 5000);
+                var quantity = Number(p.stock_quantity) || 0;
+                var matchStock = !stock || (stock === 'in-stock' && quantity > 0) || (stock === 'low-stock' && quantity > 0 && quantity <= 5);
+                return matchCat && matchSubcategory && matchBrand && matchQ && matchPrice && matchStock;
             });
 
             // Sorting
@@ -1491,6 +1891,8 @@
                 });
             }
 
+            document.getElementById('catalogTitle').textContent = currentSubcategory || (currentCategory === 'All' ? 'All products' : currentCategory);
+            document.getElementById('productResultCount').textContent = filtered.length + ' product' + (filtered.length === 1 ? '' : 's');
             renderGrid(filtered);
         }
 
@@ -1538,7 +1940,7 @@
                     var card = document.createElement('div');
                     card.className = 'product-card';
 
-                    var imgUrl = 'LOGO.jpg';
+                    var imgUrl = 'logo.png';
                     if (p.images && p.images.amazon && p.images.amazon.length > 0) {
                         imgUrl = p.images.amazon[0];
                     } else if (Array.isArray(p.images) && p.images.length > 0) {
@@ -1551,6 +1953,17 @@
 
                     var sellPrice = (p.price && p.price.selling_price !== undefined) ? p.price.selling_price : (p.price || 0);
                     var mrp = (p.price && p.price.mrp !== undefined) ? p.price.mrp : (p.mrp || 0);
+                    var saleVariants = Array.isArray(p.sale_variants)
+                        ? p.sale_variants.filter(function(variant) { return Number(variant.price) > 0; })
+                        : [];
+                    var defaultSaleVariant = saleVariants.find(function(variant) { return variant.is_default; }) || saleVariants[0];
+                    var saleSizeCount = Array.isArray(p.size_options) && p.size_options.length
+                        ? p.size_options.length
+                        : new Set(saleVariants.map(function(variant) { return variant.size_id; }).filter(Boolean)).size;
+                    if (defaultSaleVariant) {
+                        sellPrice = Number(defaultSaleVariant.price) || sellPrice;
+                        mrp = Number(defaultSaleVariant.mrp) || 0;
+                    }
                     var disc = (p.price && p.price.discount_percent !== undefined) ? p.price.discount_percent : 0;
                     if (!disc && mrp > sellPrice) {
                         disc = Math.round(((mrp - sellPrice) / mrp) * 100);
@@ -1574,7 +1987,7 @@
                     card.innerHTML = 
                         badgeHtml + statusHtml +
                         '<div class="card-img-wrap">' +
-                            '<img src="' + imgUrl + '" alt="' + title + '" class="card-img" onerror="this.src=\'LOGO.jpg\'">' +
+                            '<img src="' + imgUrl + '" alt="' + title + '" class="card-img" onerror="this.src=\'logo.png\'">' +
                         '</div>' +
                         '<div class="card-body">' +
                             assuredBadgeHtml +
@@ -1586,6 +1999,7 @@
                                 '<div>' +
                                     '<span class="price-main">₹' + sellPrice.toLocaleString('en-IN') + '</span>' +
                                     (mrp > sellPrice ? '<span class="price-mrp">₹' + mrp.toLocaleString('en-IN') + '</span>' : '') +
+                                    (saleVariants.length ? '<div class="pack-count-note">' + (saleSizeCount ? saleSizeCount + ' size' + (saleSizeCount === 1 ? '' : 's') + ' · ' : '') + saleVariants.length + ' pack combinations</div>' : '') +
                                 '</div>' +
                             '</div>' +
                             '<div class="' + actionsClass + '">' +
@@ -1617,47 +2031,41 @@
             img.style.transformOrigin = 'center center';
         }
 
+        function getProductGalleryImages(product) {
+            var images = [];
+            if (product.images && product.images.amazon) images = images.concat(product.images.amazon);
+            if (product.images && product.images.local) images = images.concat(product.images.local);
+            if (Array.isArray(product.images)) images = images.concat(product.images);
+            images = images.filter(Boolean);
+            return images.filter(function(item, index) { return images.indexOf(item) === index; });
+        }
+
+        function renderQuickViewGallery(images) {
+            var galleryImages = Array.isArray(images) && images.length ? images : ['logo.png'];
+            galleryImages = galleryImages.filter(function(item, index) { return galleryImages.indexOf(item) === index; });
+            var thumbStrip = document.getElementById('mv_thumbs_strip');
+            thumbStrip.innerHTML = '';
+            galleryImages.forEach(function(url, idx) {
+                var thumb = document.createElement('img');
+                thumb.src = url;
+                thumb.className = 'thumb-item' + (idx === 0 ? ' active' : '');
+                thumb.onerror = function() { this.src = 'logo.png'; };
+                thumb.onclick = thumb.onmouseover = function() {
+                    document.getElementById('mv_img').src = url;
+                    document.querySelectorAll('#mv_thumbs_strip .thumb-item').forEach(function(item) { item.classList.remove('active'); });
+                    thumb.classList.add('active');
+                };
+                thumbStrip.appendChild(thumb);
+            });
+            document.getElementById('mv_img').src = galleryImages[0] || 'logo.png';
+        }
+
         function openQuickView(sku) {
             var p = db.getProduct(sku);
             if (!p) return;
+            currentQuickViewProduct = p;
 
-            var allImgs = [];
-            if (p.images && p.images.amazon && p.images.amazon.length > 0) {
-                allImgs = allImgs.concat(p.images.amazon);
-            }
-            if (p.images && p.images.local && p.images.local.length > 0) {
-                allImgs = allImgs.concat(p.images.local);
-            }
-            if (Array.isArray(p.images) && p.images.length > 0) {
-                allImgs = allImgs.concat(p.images);
-            }
-            if (allImgs.length === 0) allImgs = ['LOGO.jpg'];
-            allImgs = allImgs.filter((item, index) => allImgs.indexOf(item) === index);
-
-            var thumbStrip = document.getElementById('mv_thumbs_strip');
-            if (thumbStrip) {
-                thumbStrip.innerHTML = '';
-                allImgs.forEach(function(url, idx) {
-                    var thumb = document.createElement('img');
-                    thumb.src = url;
-                    thumb.className = 'thumb-item' + (idx === 0 ? ' active' : '');
-                    thumb.onerror = function() { this.src = 'LOGO.jpg'; };
-                    thumb.onclick = function() {
-                        document.getElementById('mv_img').src = url;
-                        document.querySelectorAll('#mv_thumbs_strip .thumb-item').forEach(el => el.classList.remove('active'));
-                        thumb.classList.add('active');
-                    };
-                    thumb.onmouseover = function() {
-                        document.getElementById('mv_img').src = url;
-                        document.querySelectorAll('#mv_thumbs_strip .thumb-item').forEach(el => el.classList.remove('active'));
-                        thumb.classList.add('active');
-                    };
-                    thumbStrip.appendChild(thumb);
-                });
-            }
-
-            var imgUrl = allImgs[0] || 'LOGO.jpg';
-            document.getElementById('mv_img').src = imgUrl;
+            renderQuickViewGallery(getProductGalleryImages(p));
             document.getElementById('mv_brand').innerText = (p.brand && p.brand.display) ? p.brand.display : (p.brand || 'Generic');
             document.getElementById('mv_name').innerText = p.name || 'Unnamed Tool';
             document.getElementById('mv_sku').innerText = 'SKU: ' + (p.sku || '---');
@@ -1671,6 +2079,7 @@
             document.getElementById('mv_mrp').innerText = mrp > sellPrice ? ('₹' + mrp.toLocaleString('en-IN')) : '';
             document.getElementById('mv_discount').innerText = disc > 0 ? (disc + '% OFF') : '';
             document.getElementById('mv_discount').style.display = disc > 0 ? 'inline-block' : 'none';
+            renderSaleVariantSelector(p);
 
             document.getElementById('mv_desc').innerText = p.short_description || p.description || 'No description provided for this hardware tool.';
 
@@ -1712,14 +2121,6 @@
                 });
             }
 
-            // Action Button
-            var actWrap = document.getElementById('mv_action_wrap');
-            if (p.amazon_url) {
-                actWrap.innerHTML = '<a href="' + p.amazon_url + '" target="_blank" class="btn-amazon" style="width:100%; padding:14px; font-size:16px;"><i class="bi bi-amazon me-2"></i> Buy / View on Amazon India</a>';
-            } else {
-                actWrap.innerHTML = '<a href="add-product.html?edit=' + (p.sku || '') + '" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;"><i class="bi bi-pencil me-2"></i> Edit Product Details</a>';
-            }
-
             var modal = document.getElementById('quickViewModal');
             modal.classList.add('show');
             document.body.style.overflow = 'hidden';
@@ -1746,6 +2147,9 @@
             const loader = document.getElementById('buildmart-loader');
             if (loader) {
                 loader.classList.remove('hidden');
+                loader.classList.remove('is-running');
+                void loader.offsetHeight;
+                loader.classList.add('is-running');
                 const bar = loader.querySelector('.loader-progress-bar');
                 if (bar) {
                     bar.style.animation = 'none';
@@ -1754,6 +2158,7 @@
                 }
                 setTimeout(() => {
                     loader.classList.add('hidden');
+                    loader.classList.remove('is-running');
                     if (typeof initStore === 'function') initStore();
                 }, duration);
             }
