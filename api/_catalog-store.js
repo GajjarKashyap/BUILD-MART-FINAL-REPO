@@ -94,9 +94,9 @@ async function readCatalog(config) {
     return { catalog, sha: file.sha };
 }
 
-async function writeCatalog(config, catalog, sha, operationCount) {
+async function writeCatalog(config, catalog, sha, operationCount, messageOverride = '') {
     const body = {
-        message: `Sync ${operationCount} BuildMart catalog operation${operationCount === 1 ? '' : 's'}`,
+        message: messageOverride || `Sync ${operationCount} BuildMart catalog operation${operationCount === 1 ? '' : 's'}`,
         content: Buffer.from(`${JSON.stringify(catalog, null, 2)}\n`, 'utf8').toString('base64'),
         sha,
         branch: config.branch
@@ -113,6 +113,101 @@ async function writeCatalog(config, catalog, sha, operationCount) {
         throw error;
     }
     return response.json();
+}
+
+function validateSnapshot(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object' || !Array.isArray(snapshot.products)) {
+        const error = new Error('The browser catalog is not a valid BuildMart dataset.');
+        error.status = 400;
+        throw error;
+    }
+    if (snapshot.products.length > 5000) {
+        const error = new Error('The catalog is larger than the 5,000-product safety limit.');
+        error.status = 413;
+        throw error;
+    }
+    const seen = new Set();
+    snapshot.products.forEach((product, index) => {
+        const sku = String(product?.sku || '').trim();
+        if (!sku) {
+            const error = new Error(`Product ${index + 1} has no SKU.`);
+            error.status = 400;
+            throw error;
+        }
+        if (seen.has(sku)) {
+            const error = new Error(`Duplicate SKU found: ${sku}. Fix it before Super Save.`);
+            error.status = 409;
+            throw error;
+        }
+        seen.add(sku);
+    });
+}
+
+async function superSaveCatalog(config, snapshot) {
+    validateSnapshot(snapshot);
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const { catalog: remote, sha } = await readCatalog(config);
+        const now = new Date().toISOString();
+        const incomingSkus = new Set(snapshot.products.map(product => product.sku));
+        const archivedBySku = new Map(
+            (remote.archived_products || []).map(product => [product.sku, product])
+        );
+
+        remote.products
+            .filter(product => !incomingSkus.has(product.sku))
+            .forEach(product => {
+                archivedBySku.set(product.sku, {
+                    ...product,
+                    archived_at: now,
+                    archive_reason: 'Missing from confirmed Super Save snapshot'
+                });
+            });
+
+        const nextCatalog = {
+            metadata: {
+                ...(remote.metadata || {}),
+                ...(snapshot.metadata || {}),
+                sync: {
+                    ...(remote.metadata?.sync || {}),
+                    last_updated_at: now,
+                    api_version: API_VERSION,
+                    mode: 'manual_super_save'
+                },
+                git_super_save: {
+                    saved_at: now,
+                    product_count: snapshot.products.length
+                }
+            },
+            products: snapshot.products,
+            archived_products: [...archivedBySku.values()]
+        };
+        nextCatalog.metadata.last_serial_id = nextCatalog.products.reduce(
+            (max, product) => Math.max(max, Number(product.product_serial_id) || 0),
+            Number(nextCatalog.metadata.last_serial_id) || 1000000
+        );
+
+        try {
+            const result = await writeCatalog(
+                config,
+                nextCatalog,
+                sha,
+                snapshot.products.length,
+                `Super Save BuildMart catalog (${snapshot.products.length} products)`
+            );
+            return {
+                summary: catalogSummary(nextCatalog, result.content?.sha || sha),
+                commit: {
+                    sha: result.commit?.sha || null,
+                    url: result.commit?.html_url || null,
+                    message: result.commit?.message || null
+                }
+            };
+        } catch (error) {
+            if (error.status !== 409 || attempt === 2) throw error;
+        }
+    }
+    throw new Error('The GitHub file changed repeatedly. Press Super Save again.');
 }
 
 function timestamp(value) {
@@ -257,5 +352,6 @@ module.exports = {
     getConfig,
     readCatalog,
     requireAdmin,
+    superSaveCatalog,
     syncCatalog
 };
