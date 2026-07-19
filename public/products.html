@@ -184,6 +184,7 @@
                     <li class="nav-item"><a class="nav-link" href="index.html">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="add-product.html">Add Product</a></li>
                     <li class="nav-item"><a class="nav-link active" href="products.html">All Products</a></li>
+                    <li class="nav-item"><a class="nav-link" href="review.html">Dataset Review</a></li>
                         <li class="nav-item">
                             <a class="nav-link" href="preview-store.html" style="color: #ffc107 !important; font-weight: 600;"><i class="bi bi-shop"></i> Store Preview</a>
                         </li>
@@ -210,7 +211,8 @@
                         <option value="Power Tools">Power Tools</option>
                         <option value="Hand Tools">Hand Tools</option>
                         <option value="Tools & Accessories">Tools & Accessories</option>
-                        <option value="Adhesives & Consumables">Adhesives & Consumables</option>
+                        <option value="Fasteners & Small Hardware">Fasteners & Small Hardware</option>
+                        <option value="Wood Glues & Adhesives">Wood Glues & Adhesives</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -272,7 +274,7 @@
             loadProducts();
         }
 
-                        async function loadProducts(page = 1) {
+        async function loadProducts(page = 1) {
             currentPage = page;
             const search = document.getElementById('searchBar')?.value || '';
             const category = document.getElementById('catFilter')?.value || '';
@@ -290,7 +292,6 @@
                 renderTable(db.getAllProducts() || []);
             }
         }
-        }
 
         function renderTable(products) {
             const list = Array.isArray(products) ? products : [];
@@ -301,11 +302,6 @@
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No products found.</td></tr>';
                 return;
             }
-            if (list.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No products found.</td></tr>';
-                return;
-            }
-
             tbody.innerHTML = list.map(p => {
                 let img = 'LOGO.jpg';
                 if (p.images?.amazon?.length > 0) img = p.images.amazon[0];

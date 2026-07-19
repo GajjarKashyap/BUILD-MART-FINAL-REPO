@@ -61,7 +61,8 @@ const restoreStorage = multer.diskStorage({
 const uploadRestore = multer({ storage: restoreStorage });
 
 const CATEGORY_CODES = {
-    "Power Tools": "PT", "Hand Tools": "HT", "Tools & Accessories": "TA", "Adhesives & Consumables": "AC"
+    "Power Tools": "PT", "Hand Tools": "HT", "Tools & Accessories": "TA",
+    "Fasteners & Small Hardware": "FH", "Wood Glues & Adhesives": "AD"
 };
 const SUBCATEGORY_CODES = {
     "Drill Machines": "DR", "Angle Grinders": "AG", "Circular Saws": "CS", "Jigsaws": "JS", 
@@ -72,9 +73,10 @@ const SUBCATEGORY_CODES = {
     "Drill Bits": "DB", "Screwdriver Bits": "SB", "Saw Blades": "SW", "Grinding Wheels": "GW", 
     "Cutting Discs": "CD", "Sanding Discs": "SD", "Hole Saws": "HS", "Router Bits": "RB", 
     "Wire Brushes": "WB", "Polishing Pads": "PP",
-    "Wood Glue": "WG", "Epoxy Adhesives": "EA", "Silicone Sealants": "SS", "Masking Tape": "MT", 
-    "Double-Sided Tape": "DT", "Lubricants": "LB", "Cleaning Sprays": "CS", "Thread Seal Tape": "TS", 
-    "Putty": "PT", "Wood Fillers": "WF"
+    "Screws": "SC", "Nails": "NL", "Nuts": "NT", "Bolts": "BL", "Washers": "WS",
+    "Wall Plugs & Anchors": "WA", "Rivets": "RV", "Staples": "ST", "Hooks & Eyes": "HE", "Pins & Clips": "PC",
+    "Wood Glues": "WG", "General Adhesives": "GA", "PVA Adhesives": "PV",
+    "Epoxy Adhesives": "EA", "Contact Adhesives": "CA", "Construction Adhesives": "CO", "Instant Adhesives": "IA"
 };
 
 // -----------------------------------------------------
