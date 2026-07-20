@@ -40,11 +40,11 @@
         overlay.innerHTML = `
             <div style="width:min(100%,430px);padding:38px;background:#fff;border:1px solid #e5e7eb;border-radius:20px;box-shadow:0 28px 70px rgba(0,0,0,.38)">
                 <div style="width:58px;height:58px;margin:0 auto 18px;display:grid;place-items:center;border-radius:15px;background:#fff7ed;color:#ea580c;font-size:26px">🔐</div>
-                <h2 style="margin:0 0 8px;text-align:center;font-size:23px;color:#111827">BuildMart owner sign in</h2>
+                <h2 style="margin:0 0 8px;text-align:center;font-size:23px;color:#111827">BuildMart administrator sign in</h2>
                 <p style="margin:0 0 24px;text-align:center;color:#6b7280;font-size:13.5px;line-height:1.55">Use the Email/Password account created in Firebase Authentication. Your password goes directly to Firebase and is never saved by BuildMart.</p>
                 <form id="authLockForm">
                     <label style="display:block;margin-bottom:7px;color:#374151;font-size:12px;font-weight:700">OWNER EMAIL</label>
-                    <input id="authEmailInput" type="email" autocomplete="username" required placeholder="owner@example.com" value="${(localStorage.getItem(savedEmailKey) || '').replace(/"/g, '&quot;')}" style="box-sizing:border-box;width:100%;padding:13px 14px;margin-bottom:14px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;outline:none">
+                    <input id="authEmailInput" type="email" autocomplete="username" required placeholder="admin@example.com" value="${(localStorage.getItem(savedEmailKey) || '').replace(/"/g, '&quot;')}" style="box-sizing:border-box;width:100%;padding:13px 14px;margin-bottom:14px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;outline:none">
                     <label style="display:block;margin-bottom:7px;color:#374151;font-size:12px;font-weight:700">FIREBASE PASSWORD</label>
                     <input id="authPasswordInput" type="password" autocomplete="current-password" required placeholder="Enter your Firebase password" style="box-sizing:border-box;width:100%;padding:13px 14px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;outline:none">
                     <div id="authErrorMsg" style="display:none;margin:14px 0 0;padding:10px 12px;border-radius:8px;background:#fef2f2;color:#b91c1c;font-size:12.5px;font-weight:600"></div>

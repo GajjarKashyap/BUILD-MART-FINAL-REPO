@@ -1,5 +1,5 @@
 // Firebase web configuration is public by design. Authorization is enforced by
-// Firebase Authentication, Firestore Security Rules, and the owner UID below.
+// Firebase Authentication, Firestore Security Rules, and the administrator UIDs below.
 window.BUILDMART_FIREBASE_CONFIG = Object.freeze({
     apiKey: "AIzaSyD9cC17yf9F6tprwe_JlTa9uzwJZjIUkpg",
     authDomain: "buildmart-1.firebaseapp.com",
@@ -11,3 +11,7 @@ window.BUILDMART_FIREBASE_CONFIG = Object.freeze({
 });
 
 window.BUILDMART_FIREBASE_OWNER_UID = "Nvc2v2aAoEZalQFqNocWWDLAVlh2";
+window.BUILDMART_FIREBASE_ADMIN_UIDS = Object.freeze([
+    "Nvc2v2aAoEZalQFqNocWWDLAVlh2",
+    "Mx6t92JyCsgGZo9hITdyVI1oXpc2"
+]);
