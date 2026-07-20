@@ -15,12 +15,6 @@ const ALLOWED_PRODUCT_HOSTS = [
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
-// Vercel deploys this repository as one Express function, so the catalog
-// handlers must also be mounted here instead of relying only on /api files.
-app.all('/api/health', require('./api/health'));
-app.all('/api/sync', require('./api/sync'));
-app.all('/api/super-save', require('./api/super-save'));
-
 app.use(express.static(path.join(__dirname, 'public')));
 
 function isAllowedProductHost(hostname) {
@@ -111,8 +105,8 @@ if (require.main === module) {
     });
 }
 
-// Vercel requires the default CommonJS export to be the Express function.
-// Keep named properties attached for local tests and tooling.
+// Export the local development server for tests and tooling.
 module.exports = app;
 module.exports.app = app;
+module.exports.fetchProductPage = fetchProductPage;
 module.exports.parseAllowedProductUrl = parseAllowedProductUrl;
