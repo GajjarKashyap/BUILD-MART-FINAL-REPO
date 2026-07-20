@@ -1266,8 +1266,10 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="auth.js"></script>
-    <script src="db.js?v=2026.07.10.CATALOG28"></script>
+    <script src="firebase-config.js?v=2026.07.20.FIREBASE1"></script>
+    <script src="firebase-store.js?v=2026.07.20.FIREBASE1"></script>
+    <script src="auth.js?v=2026.07.20.FIREBASE1"></script>
+    <script src="db.js?v=2026.07.20.FIREBASE1"></script>
     <script>
         const SUBCATEGORIES = {
             "Power Tools": ["Drill Machines", "Angle Grinders", "Circular Saws", "Jigsaws", "Rotary Hammers", "Impact Drivers", "Sanders", "Heat Guns", "Electric Screwdrivers", "Polishers"],
@@ -3915,7 +3917,7 @@
         }
 
         // Form Submission
-        document.getElementById('productForm').addEventListener('submit', (e) => {
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             // Gather dynamic data
@@ -3991,6 +3993,7 @@
                 }
                 allowDuplicateOnce = false;
                 const newProduct = db.saveProduct(obj, isEdit, origSku);
+                await db.waitForFirebaseWrites();
                 rememberCurrentDefaults();
                 clearFastDraft(false);
                 markCurrentBatchItemSaved(newProduct.sku);
@@ -4135,7 +4138,7 @@
             });
         }
 
-        function saveAllGridRows() {
+        async function saveAllGridRows() {
             const rows = document.querySelectorAll('#gridTableBody tr.grid-row');
             if (rows.length === 0) return alert('No rows in the spreadsheet grid to save!');
 
@@ -4197,6 +4200,15 @@
                 db.saveProduct(obj, false);
                 savedCount++;
             });
+
+            if (savedCount > 0) {
+                try {
+                    await db.waitForFirebaseWrites();
+                } catch (error) {
+                    showWorkflowMessage(`Local grid changes were kept, but Firebase save failed: ${error.message}`, true);
+                    return;
+                }
+            }
 
             if (savedCount > 0) {
                 if (invalidCount > 0) {
