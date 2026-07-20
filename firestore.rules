@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null
+        && request.auth.uid == "Nvc2v2aAoEZalQFqNocWWDLAVlh2";
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isOwner();
+    }
+
+    match /catalog_meta/{documentId} {
+      allow read: if true;
+      allow create, update: if isOwner();
+      allow delete: if false;
+    }
+
+    match /archived_products/{productId} {
+      allow read, create, update: if isOwner();
+      allow delete: if false;
+    }
+
+    match /audit_log/{operationId} {
+      allow read, create: if isOwner();
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

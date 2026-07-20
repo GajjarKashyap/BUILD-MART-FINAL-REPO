@@ -3307,3 +3307,10 @@ class Database {
 
 // Global instance
 window.db = new Database();
+if (window.BuildMartFirebase) {
+    window.BuildMartFirebase.attachDatabase(window.db);
+} else {
+    window.addEventListener('buildmart-firebase-adapter-ready', () => {
+        window.BuildMartFirebase.attachDatabase(window.db);
+    }, { once: true });
+}
