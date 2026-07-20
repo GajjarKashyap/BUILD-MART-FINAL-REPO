@@ -9,7 +9,7 @@ const DEFAULT_CATEGORY_TAXONOMY = {
     "Wood Glues & Adhesives": ["Wood Glues", "General Adhesives", "PVA Adhesives", "Epoxy Adhesives", "Contact Adhesives", "Construction Adhesives", "Instant Adhesives"]
 };
 
-// Default Seed Hardware Catalog for Vercel, GitHub Pages, and fresh browser visitors
+// Default seed catalog for GitHub Pages and fresh browser visitors
 const DEFAULT_SEED_PRODUCTS = [
     {
         "product_serial_id": 1000001,
