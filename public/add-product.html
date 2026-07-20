@@ -4310,6 +4310,136 @@
         // ==========================================
         let maxScaleExtractedData = null;
 
+        function inferExtensionCategory(product) {
+            const text = `${product?.name || ''} ${product?.description || ''}`.toLowerCase();
+            if (/\b(drywall|wood|self[- ]?tapping|machine)?\s*screws?\b/.test(text)) return ['Fasteners & Small Hardware', 'Screws'];
+            if (/\bnails?\b/.test(text)) return ['Fasteners & Small Hardware', 'Nails'];
+            if (/\bbolts?\b/.test(text)) return ['Fasteners & Small Hardware', 'Bolts'];
+            if (/\bdrill bits?\b/.test(text)) return ['Tools & Accessories', 'Drill Bits'];
+            if (/\b(wood glue|adhesive)\b/.test(text)) return ['Wood Glues & Adhesives', 'Wood Glues'];
+            return [product?.category_hint || '', product?.subcategory_hint || ''];
+        }
+
+        function safeExtensionImages(images) {
+            return Array.from(new Set((Array.isArray(images) ? images : [])
+                .map(value => String(value || '').trim())
+                .filter(value => /^https:\/\/[^<>"']+$/i.test(value)))).slice(0, 20);
+        }
+
+        function importExtensionSaleOptions(payload) {
+            if (typeof loadSalePricing !== 'function' || !isPieceWeightSaleProduct()) return;
+            const options = [];
+            const addSize = (value, unit, price, image, selected) => {
+                const numeric = Number(value);
+                if (!(numeric > 0) || !['mm', 'in'].includes(unit)) return;
+                const id = `size-${String(numeric).replace('.', '_')}-${unit}`;
+                const existing = options.find(item => item.id === id);
+                if (existing) {
+                    if (!existing.base_price && price) existing.base_price = Number(price);
+                    return;
+                }
+                options.push({
+                    id,
+                    value: numeric,
+                    unit,
+                    label: `${numeric} ${unit}`,
+                    base_price: Number(price) || 0,
+                    images: image ? safeExtensionImages([image]) : [],
+                    is_default: Boolean(selected) || options.length === 0
+                });
+            };
+            (Array.isArray(payload.variants) ? payload.variants : []).forEach(variant => {
+                const text = Object.entries(variant || {})
+                    .filter(([key]) => !['asin', 'price', 'image', 'selected'].includes(key))
+                    .map(([, value]) => String(value || '')).join(' ');
+                const match = text.match(/(\d+(?:\.\d+)?)\s*(mm|inch|inches|in)\b/i);
+                if (match) addSize(match[1], /^in/i.test(match[2]) ? 'in' : 'mm', variant.price, variant.image, variant.selected);
+            });
+            const mixed = payload.mixed_box;
+            (Array.isArray(mixed?.components) ? mixed.components : []).forEach(component => {
+                const unit = /^in/i.test(component.unit || '') ? 'in' : String(component.unit || '').toLowerCase();
+                addSize(component.size, unit, 0, '', false);
+            });
+            if (!options.length) return;
+            const countText = `${payload.product?.name || ''} ${(payload.product?.features || []).join(' ')}`;
+            const countMatch = countText.match(/(\d+)\s*(?:pieces|piece|pcs|count)\b/i);
+            const baseQuantity = Number(mixed?.total_quantity) || Number(countMatch?.[1]) || 1;
+            const variants = options.filter(size => size.base_price > 0).map((size, index) => ({
+                quantity: baseQuantity,
+                unit: 'pcs',
+                price: size.base_price,
+                is_default: size.is_default,
+                price_source: 'manual',
+                size_id: size.id,
+                size_label: size.label,
+                is_combo: false,
+                included_size_ids: [],
+                included_size_labels: '',
+                sort_order: index
+            }));
+            if (mixed && Number(mixed.price) > 0) {
+                variants.push({
+                    quantity: Number(mixed.total_quantity) || baseQuantity,
+                    unit: 'pcs',
+                    price: Number(mixed.price),
+                    is_default: variants.length === 0,
+                    price_source: 'manual',
+                    size_id: 'combo-all',
+                    size_label: 'Mixed-size box',
+                    is_combo: true,
+                    included_size_ids: options.map(size => size.id),
+                    included_size_labels: options.map(size => size.label).join(' / '),
+                    sort_order: variants.length
+                });
+            }
+            loadSalePricing({
+                pricing_basis: { quantity: baseQuantity, unit: 'pcs', price: Number(payload.product?.price) || 0, pricing_rule: 'straight' },
+                size_options: options,
+                sale_variants: variants
+            });
+        }
+
+        window.addEventListener('message', event => {
+            const message = event.data;
+            if (event.source !== window || !message || message.source !== 'buildmart-amazon-extension' || message.action !== 'importData') return;
+            const payload = message.payload;
+            const expectedId = new URLSearchParams(window.location.search).get('amazonExtensionImport');
+            if (!payload || payload.schema !== 'buildmart.amazon-import.v1' || payload.import_id !== expectedId || !payload.product) {
+                showWorkflowMessage('Amazon extension import was rejected because the payload was invalid.', true);
+                return;
+            }
+            const product = payload.product;
+            const [category, subcategory] = inferExtensionCategory(product);
+            const specs = (Array.isArray(product.specifications) ? product.specifications : [])
+                .slice(0, 40)
+                .map(item => ({ key: String(item.key || '').slice(0, 100), value: String(item.value || '').slice(0, 500) }))
+                .filter(item => item.key && item.value);
+            const specValue = pattern => specs.find(item => pattern.test(item.key))?.value || '';
+            maxScaleExtractedData = {
+                title: String(product.name || '').slice(0, 300),
+                brand: String(product.brand || '').replace(/^Visit the | Store$/gi, '').trim().slice(0, 100),
+                category,
+                subcategory,
+                price: Number(product.price) || '',
+                mrp: Number(product.mrp) || '',
+                weight: specValue(/weight/i),
+                material: specValue(/material/i),
+                country: specValue(/country.*origin/i),
+                warrantyPeriod: '',
+                warrantyType: '',
+                amazonUrl: String(payload.source?.canonical_url || payload.source?.url || '').slice(0, 1000),
+                specifications: specs,
+                boxItems: [],
+                featuresList: (Array.isArray(product.features) ? product.features : []).map(String).filter(Boolean).slice(0, 20),
+                imagesList: safeExtensionImages(product.images),
+                short_description: String(product.description || product.name || '').slice(0, 500)
+            };
+            confirmAndPopulateForm();
+            importExtensionSaleOptions(payload);
+            showWorkflowMessage('Amazon extension import loaded. Review every field and variant, then press Save Product manually.');
+            window.postMessage({ source: 'buildmart-page', action: 'importAccepted', import_id: payload.import_id }, '*');
+        });
+
         function openAmazonFetchModal() {
             const previewCard = document.getElementById('maxScalePreviewCard');
             if (previewCard) previewCard.style.display = 'none';

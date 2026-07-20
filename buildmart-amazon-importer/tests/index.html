@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>BuildMart Amazon Extractor Test</title>
+  <style>
+    body { font: 15px system-ui; padding: 24px; color: #111827; }
+    .pass { color: #047857; } .fail { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <h1>BuildMart Amazon Extractor Test</h1>
+  <div id="fixture">
+    <link rel="canonical" href="https://www.amazon.in/dp/B0TEST1234">
+    <input id="ASIN" value="B0TEST1234">
+    <span id="productTitle">Assorted Steel Nails 16 mm 20 mm 25 mm 30 mm 50 mm, 280 pieces mixed box</span>
+    <a id="bylineInfo">Visit the BuildMart Store</a>
+    <div class="a-price"><span class="a-offscreen">₹399</span></div>
+    <div id="feature-bullets"><span class="a-list-item">Five useful nail sizes in one combo box</span></div>
+    <div id="technicalSpecifications_feature_div">
+      <table><tr><th>Material</th><td>Steel</td></tr></table>
+    </div>
+    <img id="landingImage" src="https://m.media-amazon.com/images/I/test._SX300_.jpg">
+    <div id="altImages"><img src="https://m.media-amazon.com/images/I/test._SX80_.jpg"></div>
+  </div>
+  <ol id="results"></ol>
+  <script src="../extractor.js"></script>
+  <script>
+    const data = extractProductData();
+    const checks = [
+      ['title', data.product.name.includes('Assorted Steel Nails')],
+      ['price', data.product.price === 399],
+      ['ASIN', data.source.asin === 'B0TEST1234'],
+      ['specification', data.product.specifications.some(item => item.key === 'Material' && item.value === 'Steel')],
+      ['image de-duplication', new Set(data.product.images).size === data.product.images.length],
+      ['mixed box', data.mixed_box && data.mixed_box.total_quantity === 280],
+      ['mixed sizes', data.mixed_box && data.mixed_box.components.length >= 5]
+    ];
+    const list = document.getElementById('results');
+    checks.forEach(([name, pass]) => {
+      const item = document.createElement('li');
+      item.className = pass ? 'pass' : 'fail';
+      item.textContent = `${pass ? 'PASS' : 'FAIL'} — ${name}`;
+      list.appendChild(item);
+    });
+    document.title = checks.every(([, pass]) => pass) ? 'PASS' : 'FAIL';
+  </script>
+</body>
+</html>

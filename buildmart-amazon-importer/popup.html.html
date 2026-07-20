@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <h1>🛒 BuildMart Amazon Importer</h1>
+    <div id="status" class="status"></div>
+    <div class="info-panel">
+      <div><strong>URL:</strong> <span id="url">—</span></div>
+      <div><strong>ASIN:</strong> <span id="asin">—</span></div>
+      <div><strong>Title:</strong> <span id="title">—</span></div>
+      <div><strong>Price:</strong> <span id="price">—</span></div>
+      <div><strong>Images:</strong> <span id="images">—</span></div>
+      <div><strong>Specs:</strong> <span id="specs">—</span></div>
+      <div><strong>Variants:</strong> <span id="variants">—</span></div>
+    </div>
+    <div class="buttons">
+      <button id="scanBtn">🔍 Scan Current Page</button>
+      <button id="importBtn" disabled>📥 Import into BuildMart</button>
+      <button id="copyBtn">📋 Copy Extracted JSON</button>
+      <button id="optionsBtn">⚙️ Open Settings</button>
+    </div>
+    <div id="warnings" class="warnings"></div>
+  </div>
+  <script src="popup.js.js"></script>
+</body>
+</html>

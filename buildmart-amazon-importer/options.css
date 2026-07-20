@@ -1,0 +1,4 @@
+body { font-family: sans-serif; padding: 20px; }
+.container { max-width: 600px; margin: auto; }
+input { width: 100%; padding: 8px; margin: 8px 0; }
+button { margin: 4px; padding: 8px; }
