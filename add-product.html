@@ -4326,14 +4326,17 @@
             if (urlInput) urlInput.value = url;
             if (statusEl) {
                 statusEl.style.display = 'block';
-                statusEl.innerHTML = '<span class="spinner-border spinner-border-sm text-primary" role="status"></span> <b>Fetching product page through your local server…</b>';
+                statusEl.innerHTML = '<span class="spinner-border spinner-border-sm text-primary" role="status"></span> <b>Fetching product page securely…</b>';
             }
             showWorkflowMessage('Fetching the product page…');
 
             let htmlContent = '';
             let finalUrl = url;
             try {
-                const res = await fetch('/api/product-page', {
+                const apiOrigin = window.location.hostname.endsWith('github.io')
+                    ? 'https://build-mart-final-repo.vercel.app'
+                    : '';
+                const res = await fetch(`${apiOrigin}/api/product-page`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url })
