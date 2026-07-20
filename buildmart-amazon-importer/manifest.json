@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "BuildMart Amazon Importer",
+  "version": "1.0.0",
+  "description": "Extract Amazon India product data locally and review it in BuildMart before saving.",
+  "permissions": ["activeTab", "scripting", "storage", "tabs"],
+  "host_permissions": [
+    "https://www.amazon.in/*",
+    "https://*.amazon.in/*",
+    "https://amzn.in/*"
+  ],
+  "action": {
+    "default_popup": "popup.html.html",
+    "default_title": "BuildMart Amazon Importer"
+  },
+  "background": {
+    "service_worker": "service-worker.js.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.amazon.in/*",
+        "https://*.amazon.in/*",
+        "https://amzn.in/*"
+      ],
+      "js": ["extractor.js", "amazon-content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "file:///*",
+        "https://gajjarkashyap.github.io/BUILD-MART-FINAL-REPO/*"
+      ],
+      "js": ["buildmart-content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html.html"
+}
