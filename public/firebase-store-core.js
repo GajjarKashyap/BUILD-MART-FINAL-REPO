@@ -4,6 +4,9 @@
     const SDK_VERSION = '12.16.0';
     const config = window.BUILDMART_FIREBASE_CONFIG;
     const ownerUid = window.BUILDMART_FIREBASE_OWNER_UID;
+    const adminUids = Array.isArray(window.BUILDMART_FIREBASE_ADMIN_UIDS)
+        ? window.BUILDMART_FIREBASE_ADMIN_UIDS
+        : [ownerUid];
     const state = {
         phase: 'loading',
         message: 'Connecting to Firebase…',
@@ -47,17 +50,17 @@
     }
 
     function isOwner(user = state.user) {
-        return Boolean(user && user.uid === ownerUid);
+        return Boolean(user && adminUids.includes(user.uid));
     }
 
     function requireOwner() {
         if (!isOwner()) {
-            throw new Error('Sign in with the authorized Firebase owner account before changing catalog data.');
+            throw new Error('Sign in with an authorized BuildMart administrator account before changing catalog data.');
         }
     }
 
     async function initialize() {
-        if (!config || !config.apiKey || !config.projectId || !ownerUid) {
+        if (!config || !config.apiKey || !config.projectId || !adminUids.length) {
             throw new Error('Firebase configuration is incomplete.');
         }
         [appApi, authApi, firestoreApi] = await Promise.all([
@@ -78,7 +81,7 @@
                 user: user || null,
                 phase: state.remoteProductCount == null ? 'loading' : 'ready',
                 message: user
-                    ? (isOwner(user) ? 'Firebase owner connected' : 'Signed-in account is not the BuildMart owner')
+                    ? (isOwner(user) ? 'Firebase administrator connected' : 'Signed-in account is not a BuildMart administrator')
                     : 'Public Firebase catalog connected'
             });
             window.dispatchEvent(new CustomEvent('buildmart-auth-changed', { detail: { user } }));
