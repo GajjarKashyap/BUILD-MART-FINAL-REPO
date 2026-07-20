@@ -3,7 +3,7 @@
 /**
  * Main entry point. Returns a full import object.
  */
-function extractProductData() {
+async function extractProductData() {
   const warnings = [];
   const extracted = {
     schema: "buildmart.amazon-import.v1",
@@ -47,6 +47,7 @@ function extractProductData() {
 
     // 3. Variant extraction (twister)
     extractVariants(extracted);
+    await extractEmbeddedVariants(extracted);
 
     // 4. Mixed box detection
     detectMixedBox(extracted);
@@ -61,6 +62,135 @@ function extractProductData() {
     extracted.warnings.push(...warnings);
     return extracted;
   }
+}
+
+function extractJsonValue(source, key) {
+  const marker = `"${key}"`;
+  const keyIndex = source.indexOf(marker);
+  if (keyIndex < 0) return null;
+  const colon = source.indexOf(':', keyIndex + marker.length);
+  if (colon < 0) return null;
+  let start = colon + 1;
+  while (/\s/.test(source[start] || '')) start += 1;
+  const opener = source[start];
+  const closer = opener === '{' ? '}' : opener === '[' ? ']' : '';
+  if (!closer) return null;
+  let depth = 0;
+  let quoted = false;
+  let escaped = false;
+  for (let index = start; index < source.length; index += 1) {
+    const char = source[index];
+    if (quoted) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') quoted = false;
+      continue;
+    }
+    if (char === '"') {
+      quoted = true;
+      continue;
+    }
+    if (char === opener) depth += 1;
+    if (char === closer) {
+      depth -= 1;
+      if (depth === 0) {
+        try {
+          return JSON.parse(source.slice(start, index + 1));
+        } catch (_) {
+          return null;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function primaryImageFromDocument(doc) {
+  const image = doc.querySelector('#landingImage, #imgTagWrapperId img');
+  if (!image) return '';
+  const dynamic = image.getAttribute('data-a-dynamic-image');
+  if (dynamic) {
+    try {
+      const entries = Object.entries(JSON.parse(dynamic));
+      entries.sort((a, b) => ((b[1]?.[0] || 0) * (b[1]?.[1] || 0)) - ((a[1]?.[0] || 0) * (a[1]?.[1] || 0)));
+      if (entries[0]?.[0]) return highResUrl(entries[0][0]);
+    } catch (_) { /* use normal attributes */ }
+  }
+  return highResUrl(image.getAttribute('data-old-hires') || image.currentSrc || image.src || '');
+}
+
+function variantDataFromDocument(doc, asin, dimensions, selected) {
+  const hiddenPrice = doc.querySelector('#twister-plus-price-data-price')?.value;
+  const salePrice = hiddenPrice ||
+    doc.querySelector('#corePrice_feature_div .a-price .a-offscreen, .priceToPay .a-offscreen, #priceblock_ourprice, #priceblock_dealprice')?.textContent;
+  const mrp = doc.querySelector('#corePrice_feature_div .a-price.a-text-price .a-offscreen, .basisPrice .a-offscreen, #listPrice')?.textContent;
+  const primary = primaryImageFromDocument(doc);
+  const gallery = Array.from(doc.querySelectorAll('#altImages img'))
+    .map(image => highResUrl(image.src || image.dataset.src || ''))
+    .filter(Boolean);
+  return {
+    ...dimensions,
+    asin,
+    selected,
+    price: parsePrice(salePrice),
+    mrp: parsePrice(mrp),
+    image: primary || null,
+    images: Array.from(new Set([primary, ...gallery].filter(Boolean))).slice(0, 12),
+    title: cleanText(doc.querySelector('#productTitle')?.textContent),
+    url: `https://www.amazon.in/dp/${asin}?psc=1`
+  };
+}
+
+async function extractEmbeddedVariants(ext) {
+  const script = Array.from(document.scripts)
+    .map(node => node.textContent || '')
+    .find(text => text.includes('"dimensionValuesDisplayData"') && text.includes('"variationValues"'));
+  if (!script) return;
+  const displayMap = extractJsonValue(script, 'dimensionValuesDisplayData');
+  const dimensions = extractJsonValue(script, 'dimensions') || [];
+  if (!displayMap || !Object.keys(displayMap).length) return;
+  const existing = new Map((ext.variants || []).filter(item => item.asin).map(item => [item.asin, item]));
+  const entries = Object.entries(displayMap).slice(0, 12);
+  const result = [];
+
+  for (let offset = 0; offset < entries.length; offset += 3) {
+    const batch = entries.slice(offset, offset + 3);
+    const values = await Promise.all(batch.map(async ([asin, labels]) => {
+      const dimensionData = {};
+      dimensions.forEach((name, index) => {
+        dimensionData[name] = Array.isArray(labels) ? String(labels[index] || '') : '';
+      });
+      const selected = asin === ext.source.asin;
+      if (selected) return {
+        ...variantDataFromDocument(document, asin, dimensionData, true),
+        price: ext.product.price,
+        mrp: ext.product.mrp,
+        image: ext.product.images[0] || primaryImageFromDocument(document),
+        images: ext.product.images.slice()
+      };
+      try {
+        const response = await fetch(`/dp/${encodeURIComponent(asin)}?psc=1&th=1`, {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'accept': 'text/html' }
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const html = await response.text();
+        if (/robot check|validatecaptcha|enter the characters you see below/i.test(html)) {
+          throw new Error('CAPTCHA');
+        }
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        return variantDataFromDocument(doc, asin, dimensionData, false);
+      } catch (error) {
+        ext.warnings.push(`Could not load ${dimensionData[dimensions[0]] || asin} variant (${error.message}).`);
+        return { ...dimensionData, asin, selected: false, price: null, mrp: null, image: null, images: [], url: `https://www.amazon.in/dp/${asin}?psc=1` };
+      }
+    }));
+    result.push(...values);
+  }
+
+  result.forEach(variant => existing.set(variant.asin, { ...(existing.get(variant.asin) || {}), ...variant }));
+  ext.variants = Array.from(existing.values());
 }
 
 /* ---------- JSON‑LD ---------- */

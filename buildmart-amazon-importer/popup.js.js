@@ -24,7 +24,7 @@ function displayTabInfo(tab) {
 }
 
 async function scanPage(tab) {
-  setStatus('Extracting product data...', 'info');
+  setStatus('Reading product and loading its variations…', 'info');
   try {
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'EXTRACT' });
     if (!response.success) throw new Error(response.error);
@@ -39,7 +39,8 @@ async function scanPage(tab) {
 
 function populatePreview(data) {
   document.getElementById('asin').textContent = data.source?.asin || '—';
-  document.getElementById('title').textContent = (data.product?.name || '').substring(0, 60);
+  document.getElementById('title').textContent = data.product?.name || '—';
+  document.getElementById('title').title = data.product?.name || '';
   document.getElementById('price').textContent = data.product?.price ? '₹' + data.product.price : '—';
   document.getElementById('images').textContent = data.product?.images?.length || 0;
   document.getElementById('specs').textContent = data.product?.specifications?.length || 0;

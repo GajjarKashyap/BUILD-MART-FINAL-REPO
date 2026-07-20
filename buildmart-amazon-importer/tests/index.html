@@ -22,11 +22,33 @@
     </div>
     <img id="landingImage" src="https://m.media-amazon.com/images/I/test._SX300_.jpg">
     <div id="altImages"><img src="https://m.media-amazon.com/images/I/test._SX80_.jpg"></div>
+    <script type="application/json">
+      {
+        "dimensions": ["size_name"],
+        "variationValues": {"size_name": ["2 KG", "250 GM"]},
+        "dimensionValuesDisplayData": {
+          "B0TEST1234": ["2 KG"],
+          "B0TEST5678": ["250 GM"]
+        }
+      }
+    </script>
   </div>
   <ol id="results"></ol>
+  <script>
+    window.fetch = async () => ({
+      ok: true,
+      text: async () => `
+        <span id="productTitle">Bonding Adhesive 250 GM</span>
+        <input id="twister-plus-price-data-price" value="121">
+        <span class="basisPrice"><span class="a-offscreen">₹125</span></span>
+        <img id="landingImage" src="https://m.media-amazon.com/images/I/child._SX300_.jpg">
+      `
+    });
+  </script>
   <script src="../extractor.js"></script>
   <script>
-    const data = extractProductData();
+    (async () => {
+    const data = await extractProductData();
     const checks = [
       ['title', data.product.name.includes('Assorted Steel Nails')],
       ['price', data.product.price === 399],
@@ -34,7 +56,9 @@
       ['specification', data.product.specifications.some(item => item.key === 'Material' && item.value === 'Steel')],
       ['image de-duplication', new Set(data.product.images).size === data.product.images.length],
       ['mixed box', data.mixed_box && data.mixed_box.total_quantity === 280],
-      ['mixed sizes', data.mixed_box && data.mixed_box.components.length >= 5]
+      ['mixed sizes', data.mixed_box && data.mixed_box.components.length >= 5],
+      ['embedded variants', data.variants.length === 2],
+      ['child variant price', data.variants.some(item => item.asin === 'B0TEST5678' && item.price === 121)]
     ];
     const list = document.getElementById('results');
     checks.forEach(([name, pass]) => {
@@ -44,6 +68,7 @@
       list.appendChild(item);
     });
     document.title = checks.every(([, pass]) => pass) ? 'PASS' : 'FAIL';
+    })();
   </script>
 </body>
 </html>
